@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.18)
-project(zafiro VERSION 0.2.1 LANGUAGES CXX)
+project(zafiro VERSION 0.2.1 LANGUAGES C CXX)
 
 include(CTest)
 include(GNUInstallDirs)
