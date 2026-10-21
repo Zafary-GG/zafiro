@@ -1,0 +1,8 @@
+{
+  "name": "zafiro-language-bridge",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Prototipo del puente Zafiro para ejecutar JavaScript y Python desde Node.js",
+  "type": "module",
+  "scripts": { "start": "node server.js" }
+}

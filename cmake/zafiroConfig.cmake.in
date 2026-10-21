@@ -1,0 +1,17 @@
+@PACKAGE_INIT@
+
+include(CMakeFindDependencyMacro)
+
+if(@ZAFIRO_CONFIG_PYTHON@ AND "python" IN_LIST zafiro_FIND_COMPONENTS)
+    find_dependency(Python3 3.9 COMPONENTS Development.Embed)
+endif()
+set(zafiro_python_FOUND @ZAFIRO_CONFIG_PYTHON@)
+
+if(@ZAFIRO_CONFIG_JAVASCRIPT@)
+    set(zafiro_javascript_FOUND TRUE)
+else()
+    set(zafiro_javascript_FOUND FALSE)
+endif()
+
+include("${CMAKE_CURRENT_LIST_DIR}/zafiroTargets.cmake")
+check_required_components(zafiro)

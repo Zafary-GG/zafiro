@@ -1,0 +1,83 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="color-scheme" content="dark">
+  <meta name="theme-color" content="#10191d">
+  <title>Zafiro — un puente entre lenguajes</title>
+  <link rel="stylesheet" href="/zafiro.css">
+  <script src="/zafiro.js" defer></script>
+</head>
+<body>
+  <header class="topbar wrap">
+    <a class="brand" href="#inicio" aria-label="Zafiro, inicio"><span class="gem">◆</span> ZAFIRO</a>
+    <nav aria-label="Navegación principal"><a href="#como-funciona">Cómo funciona</a><a href="#ejemplo">Ejemplo</a><a href="#descargas">Instalar</a><a href="/INSTALL.md">Guía</a></nav>
+    <span class="version">C++17 · v0.2.1</span>
+  </header>
+
+  <main id="inicio" class="wrap">
+    <section class="hero">
+      <div class="hero-copy">
+        <p class="eyebrow"><span class="pulse"></span> LIBRERÍA C++ · PUENTE MULTILENGUAJE</p>
+        <h1>Un proyecto.<br><span>Varios lenguajes.</span></h1>
+        <p class="lead">Conecta tu aplicación C++ con adaptadores para otros runtimes. Zafiro organiza el puente; tú eliges qué lenguajes y motores integrar.</p>
+        <div class="actions"><a class="button primary" href="/zafiro-0.2.1-source.zip" download>Descargar Zafiro <span aria-hidden="true">↓</span></a><a class="text-link" href="/INSTALL.md">Guía de instalación <span aria-hidden="true">→</span></a></div>
+        <div class="chips"><span><i></i> Core header-only</span><span><i></i> Python + JavaScript</span><span><i></i> C++17</span></div>
+      </div>
+      <div class="code-card hero-code" aria-label="Ejemplo C++">
+        <div class="code-top"><span class="dots"><b></b><b></b><b></b></span><span>main.cpp</span><span class="lang-label">C++</span></div>
+        <pre><code><span class="kw">#include</span> <span class="str">&lt;zafiro/zafiro.hpp&gt;</span>
+<span class="kw">#include</span> <span class="str">&lt;iostream&gt;</span>
+
+<span class="kw">int</span> <span class="fn">main</span>() {
+  zafiro::LanguageHub hub;
+
+  hub.<span class="fn">register_language</span>(<span class="str">"demo"</span>,
+    [](<span class="kw">const</span> std::string&amp; code) {
+      <span class="kw">return</span> <span class="str">"Recibido: "</span> + code;
+    });
+
+  std::cout &lt;&lt; hub.<span class="fn">run</span>(
+    <span class="str">"demo"</span>, <span class="str">"hola"</span>) &lt;&lt; <span class="str">'\n'</span>;
+}</code></pre>
+        <div class="code-foot"><span class="check">✓</span> Un adaptador por runtime</div>
+      </div>
+      <div class="orbit orbit-one"></div><div class="orbit orbit-two"></div>
+    </section>
+
+    <section id="como-funciona" class="section how">
+      <div class="section-heading"><p class="eyebrow">EL CONCEPTO</p><h2>Zafiro hace de <span>conector.</span></h2><p>Cada runtime se integra mediante una función adaptadora. La aplicación elige el lenguaje y envía el texto de código al adaptador correspondiente.</p></div>
+      <div class="flow" aria-label="Flujo de ejecución"><div class="flow-node"><span class="node-icon">C++</span><b>Tu aplicación</b><small>elige el adaptador</small></div><span class="flow-arrow">→</span><div class="flow-node zafiro-node"><span class="node-icon">◆</span><b>Zafiro</b><small>LanguageHub</small></div><span class="flow-arrow">→</span><div class="flow-node"><span class="node-icon runtime-icon">Py · JS</span><b>Runtime conectado</b><small>recibe el fragmento</small></div></div>
+      <div class="note"><span class="note-mark">i</span><p><b>Python y JavaScript tienen adaptadores reales.</b> CPython y QuickJS-NG se activan por separado en CMake; ambos conservan estado entre llamadas. Otros runtimes pueden conectarse con adaptadores propios.</p></div>
+    </section>
+
+    <section id="ejemplo" class="section example-section">
+      <div class="example-intro"><p class="eyebrow">UNA API PEQUEÑA</p><h2>Registra.<br><span>Elige. Ejecuta.</span></h2><p>Los adaptadores conectan CPython o QuickJS-NG. Cada uno se activa por separado al compilar.</p><div class="api-list"><div><code>register_javascript(hub)</code><small>Conecta QuickJS-NG al puente.</small></div><div><code>has_language(nombre)</code><small>Comprueba si existe el adaptador.</small></div><div><code>run(nombre, codigo)</code><small>Envía código y devuelve texto.</small></div></div></div>
+      <div class="code-card example-code"><div class="code-top"><span class="dots"><b></b><b></b><b></b></span><span>javascript.cpp</span><button class="copy" data-copy="snippet" type="button">Copiar código</button></div><pre><code id="snippet"><span class="kw">#include</span> <span class="str">&lt;zafiro/javascript.hpp&gt;</span>
+<span class="kw">#include</span> <span class="str">&lt;iostream&gt;</span>
+
+<span class="kw">int</span> <span class="fn">main</span>() {
+  zafiro::LanguageHub hub;
+  zafiro::<span class="fn">register_javascript</span>(hub);
+  std::cout &lt;&lt; hub.<span class="fn">run</span>(
+    <span class="str">"javascript"</span>, <span class="str">"console.log(6 * 7);"</span>);
+ }</code></pre><div class="output-line"><span>Salida de QuickJS-NG</span><code>42</code></div></div>
+    </section>
+
+    <section id="descargas" class="section start-section">
+      <div><p class="eyebrow">INSTALACIÓN Y DESCARGAS · v0.2.1</p><h2>De la descarga a <span>find_package.</span></h2><p>Instala los adaptadores que necesites y úsalos desde un proyecto CMake independiente.</p><p><a class="button primary" href="/zafiro-0.2.1-source.zip" download>Código fuente ↓</a> <a class="text-link" href="/zafiro-0.2.1-Windows-x86_64.zip" download>Paquete Windows x86_64 (.zip) →</a> <a class="text-link" href="/zafiro-0.2.1-Windows-x86_64.tar.gz" download>TGZ</a> <a class="text-link" href="/INSTALL.md">Guía completa →</a> <a class="text-link" href="/SHA256SUMS.txt">SHA-256</a></p></div>
+      <div class="start-grid"><article><span>01</span><h3>Instala los adaptadores</h3><p>CPython es opcional. CMake integra QuickJS-NG para JavaScript.</p><pre><code>cmake -S . -B build \
+  -DCMAKE_INSTALL_PREFIX=./install \
+  -DZAFIRO_WITH_PYTHON=ON \
+  -DZAFIRO_WITH_JAVASCRIPT=ON<br>cmake --build build<br>cmake --install build</code></pre></article><article><span>02</span><h3>Encuéntralos desde tu app</h3><p>Indica a CMake dónde se instaló Zafiro.</p><pre><code>find_package(zafiro 0.2 CONFIG REQUIRED
+  COMPONENTS python javascript)<br>target_link_libraries(mi_app PRIVATE
+  zafiro::python zafiro::javascript)</code></pre></article><article><span>03</span><h3>Empaqueta para tu sistema</h3><p>CPack genera ZIP y TGZ versionados con los componentes seleccionados.</p><pre><code>cmake --build build --target package</code></pre><p>Compila en Windows, Linux o macOS para tu sistema y arquitectura.</p></article></div>
+      <div class="next-note"><span>✦</span><p><b>El consumidor CMake está incluido.</b> <code>examples/installed-consumer</code> enlaza los adaptadores usando únicamente los targets instalados.</p></div>
+    </section>
+  </main>
+
+  <footer class="footer wrap"><a class="brand" href="#inicio"><span class="gem">◆</span> ZAFIRO</a><span>Un puente pequeño para ideas hechas en varios lenguajes.</span><a href="#inicio">Volver arriba ↑</a></footer>
+  <div class="toast" role="status" aria-live="polite"></div>
+</body>
+</html>

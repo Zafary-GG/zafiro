@@ -1,0 +1,28 @@
+# Build trees and generated packages
+/build/
+/build-*/
+/out/
+/dist/
+/_CPack_Packages/
+*.zip
+*.tar.gz
+*.tgz
+
+# Editor and operating system files
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
+
+# Local credentials and environment configuration
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+id_rsa*
+id_ed25519*
+
+# Node dependencies and logs
+node_modules/
+npm-debug.log*

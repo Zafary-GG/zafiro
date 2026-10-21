@@ -1,0 +1,115 @@
+# Instalación de Zafiro 0.2.1
+
+Zafiro es una librería C++17. El núcleo solo necesita sus cabeceras; los adaptadores son opcionales.
+
+## Requisitos
+
+- CMake 3.18 o posterior.
+- Un compilador compatible con C++17: GCC, Clang o MSVC.
+- Para JavaScript: conexión a Internet durante la primera configuración para descargar QuickJS-NG v0.17.0.
+- Para Python: CPython 3.9 o posterior instalado con sus archivos de desarrollo y embedding.
+
+## Descargar el código
+
+Descarga el código fuente y los paquetes compilados desde la sección **Releases** del repositorio. Para Linux y macOS, compila desde el código fuente en el sistema de destino y verifica cada archivo con el manifiesto SHA-256 incluido en la publicación.
+
+## Compilar el núcleo
+
+Desde la carpeta que contiene `CMakeLists.txt`:
+
+```sh
+cmake -S . -B build
+cmake --build build --config Release
+```
+
+El ejemplo `zafiro_basic` muestra las utilidades de texto y números. El núcleo es header-only; también puedes incluir `include/zafiro/zafiro.hpp` y compilar con C++17 directamente.
+
+## Instalar el núcleo y los adaptadores
+
+Los adaptadores se incluyen al configurar la instalación de Zafiro. Python requiere CPython 3.9+ con `Development.Embed`; JavaScript descarga QuickJS-NG v0.17.0. Selecciona solo los que necesites:
+
+```sh
+cmake -S . -B build \
+  -DCMAKE_INSTALL_PREFIX=/ruta/a/zafiro \
+  -DZAFIRO_WITH_PYTHON=ON \
+  -DZAFIRO_WITH_JAVASCRIPT=ON
+cmake --build build --config Release
+cmake --install build --config Release
+```
+
+El paquete instala cabeceras y targets CMake `zafiro::zafiro`, `zafiro::python` y `zafiro::javascript`. Cuando JavaScript está activado, también instala la biblioteca y cabeceras QuickJS-NG requeridas por el adaptador.
+
+Para generar archivos versionados después de compilar, ejecuta `cmake --build build --target package`. CPack genera `zafiro-0.2.1-<sistema>-<arquitectura>.zip` y `.tar.gz`; ambos contienen los componentes seleccionados, cabeceras, configuración CMake y documentación. Compila en cada sistema de destino para que el paquete incluya la biblioteca QuickJS adecuada a esa plataforma.
+
+El proyecto [examples/installed-consumer](examples/installed-consumer) sirve para comprobar la instalación desde un consumidor independiente. Configúralo con `-DCMAKE_PREFIX_PATH=/ruta/a/zafiro` y, si no instalaste algún runtime, desactiva su opción, por ejemplo `-DZAFIRO_CONSUMER_PYTHON=OFF`.
+
+Comandos completos para el consumidor incluido:
+
+```sh
+cmake -S examples/installed-consumer -B consumer-build \
+  -DCMAKE_PREFIX_PATH=/ruta/a/zafiro
+cmake --build consumer-build --config Release
+```
+
+Las opciones `ZAFIRO_CONSUMER_PYTHON` y `ZAFIRO_CONSUMER_JAVASCRIPT` vienen activadas por defecto; ponlas en `OFF` para omitir un runtime.
+
+## Usar desde otro proyecto CMake
+
+Indica el prefijo de instalación al configurar el proyecto consumidor:
+
+```cmake
+find_package(zafiro 0.2 CONFIG REQUIRED COMPONENTS python javascript)
+
+add_executable(mi_app main.cpp)
+target_link_libraries(mi_app PRIVATE
+    zafiro::zafiro
+    zafiro::python
+    zafiro::javascript)
+```
+
+Si no quieres un adaptador, quítalo de `COMPONENTS` y de `target_link_libraries`. Solicitar un componente que no se incluyó al instalar Zafiro produce un error claro de `find_package`.
+
+## Compilar y probar adaptadores desde el código fuente
+
+```sh
+cmake -S . -B build -DZAFIRO_WITH_JAVASCRIPT=ON
+cmake --build build --config Release
+ctest --test-dir build -C Release --output-on-failure
+```
+
+CMake descarga QuickJS-NG v0.17.0. El adaptador proporciona `print`, `console.log` y `console.error`, conserva el contexto entre llamadas, limita memoria a 64 MiB y solicita interrumpir una ejecución tras dos segundos. La prueba de integración se llama `zafiro.javascript_adapter`.
+
+## Activar el adaptador Python
+
+Instala CPython 3.9+ y sus componentes de desarrollo/embedding. Luego:
+
+```sh
+cmake -S . -B build -DZAFIRO_WITH_PYTHON=ON
+cmake --build build --config Release
+ctest --test-dir build -C Release --output-on-failure
+```
+
+La prueba de integración se llama `zafiro.python_adapter`.
+
+## Sistemas operativos
+
+- **Windows:** instala Visual Studio Build Tools con el componente de C++ y CMake. Ejecuta los comandos desde Developer PowerShell. Si activas Python, instala además el paquete de desarrollo de CPython.
+- **Linux:** instala CMake, GCC o Clang y Git. Para JavaScript, permite que CMake acceda a GitHub durante la primera configuración. Para Python, instala el paquete de desarrollo de Python 3.
+- **macOS:** instala Xcode Command Line Tools y CMake. Para JavaScript, permite acceso a GitHub durante la configuración. Para Python, usa una instalación de CPython con headers y biblioteca embedding.
+
+En Windows puedes distribuir el `.zip`; en Linux y macOS puedes distribuir el `.tar.gz`. Los paquetes son específicos de la plataforma y arquitectura donde se compilaron, especialmente cuando incluyen los adaptadores.
+
+## Uso mínimo
+
+```cpp
+#include <iostream>
+#include <zafiro/zafiro.hpp>
+
+int main() {
+    std::cout << zafiro::to_upper("hola") << '\n';
+}
+```
+
+## Seguridad
+
+Los adaptadores ejecutan scripts en el proceso anfitrión. No son un sandbox; permite solo código de confianza. Para código de terceros usa aislamiento a nivel de sistema operativo.

@@ -1,0 +1,29 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#10191d"><title>Zafiro — un puente entre lenguajes</title>
+  <style>
+    :root{color-scheme:dark;--bg:#10191d;--panel:#19262a;--ink:#e9f2ed;--muted:#9bb0aa;--mint:#a8efd0;--line:#30423f;--orange:#f3b779}
+    *{box-sizing:border-box}body{margin:0;background:radial-gradient(ellipse at 78% 4%,#285045 0,transparent 31rem),var(--bg);color:var(--ink);font:16px/1.55 system-ui,Segoe UI,sans-serif}
+    .wrap{max-width:1080px;margin:auto;padding:28px 24px 70px}.top{display:flex;justify-content:space-between;align-items:center;border-bottom:1px solid var(--line);padding-bottom:18px}.brand{font-weight:800;letter-spacing:.08em;color:var(--mint)}.badge{color:var(--muted);font-size:13px}
+    .hero{padding:72px 0 42px;max-width:760px}.eyebrow{color:var(--orange);text-transform:uppercase;letter-spacing:.16em;font-size:12px;font-weight:700}.hero h1{font-size:clamp(42px,8vw,76px);line-height:1.02;letter-spacing:-.055em;margin:14px 0 20px}.hero p{color:var(--muted);font-size:19px;max-width:650px;margin:0}.hero strong{color:var(--ink)}
+    .grid{display:grid;grid-template-columns:1.1fr .9fr;gap:18px}.panel{border:1px solid var(--line);border-radius:16px;background:#172327dd;padding:22px}.panel h2{margin:0 0 6px;font-size:20px}.panel p{margin:0 0 18px;color:var(--muted);font-size:14px}.controls{display:flex;gap:10px;align-items:center;margin-bottom:12px}select,button{font:inherit;border-radius:9px;padding:10px 13px;border:1px solid var(--line);background:#10191d;color:var(--ink)}button{background:var(--mint);border-color:var(--mint);color:#10231c;font-weight:750;cursor:pointer}button:disabled{opacity:.6;cursor:wait}textarea{display:block;width:100%;height:210px;resize:vertical;background:#0e171a;color:#dbede5;border:1px solid var(--line);border-radius:10px;padding:14px;font:14px/1.55 ui-monospace,Consolas,monospace;tab-size:2}.output{white-space:pre-wrap;min-height:210px;margin:0;padding:14px;border-radius:10px;background:#0e171a;border:1px solid var(--line);font:14px/1.55 ui-monospace,Consolas,monospace;color:var(--mint);overflow:auto}.error{color:#ffad9c}.steps{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;margin-top:18px}.step{border-top:1px solid var(--line);padding-top:14px;color:var(--muted);font-size:14px}.step b{display:block;color:var(--ink);margin-bottom:5px}.foot{margin-top:26px;color:var(--muted);font-size:12px}.foot a{color:var(--mint)}
+    @media(max-width:720px){.wrap{padding:20px 16px 48px}.hero{padding:52px 0 30px}.grid{grid-template-columns:1fr}.steps{grid-template-columns:1fr}.badge{max-width:160px;text-align:right}}
+  </style>
+</head>
+<body><main class="wrap">
+  <header class="top"><div class="brand">◆ ZAFIRO</div><div class="badge">Prototipo · C++ / Python / JavaScript</div></header>
+  <section class="hero"><div class="eyebrow">Un puente para tus ideas</div><h1>Varios lenguajes.<br>Un mismo proyecto.</h1><p>Zafiro conecta runtimes para que una aplicación pueda enviar código a más de un lenguaje. <strong>Prueba el prototipo</strong> con Python y JavaScript.</p></section>
+  <section class="grid" aria-label="Probador de código">
+    <div class="panel"><h2>Escribe y ejecuta</h2><p>El servidor local ejecuta el ejemplo seleccionado y devuelve su salida.</p><div class="controls"><select id="language" aria-label="Lenguaje"><option value="javascript">JavaScript</option><option value="python">Python</option></select><button id="run">Ejecutar código</button></div><textarea id="code" spellcheck="false" aria-label="Código"></textarea></div>
+    <div class="panel"><h2>Resultado</h2><p id="status">Listo para ejecutar.</p><pre class="output" id="output" aria-live="polite">La salida aparecerá aquí.</pre></div>
+  </section>
+  <section class="steps"><div class="step"><b>01 · Elige</b>Selecciona el runtime conectado.</div><div class="step"><b>02 · Envía</b>Zafiro manda el fragmento al adaptador.</div><div class="step"><b>03 · Recibe</b>La salida vuelve al programa anfitrión.</div></section>
+  <p class="foot">Prototipo local. El código se ejecuta en el equipo que aloja el servidor. No publiques este ejecutor abierto a internet: aún no tiene aislamiento de procesos. <a href="https://github.com/">Repositorio próximamente</a></p>
+</main><script>
+const examples={javascript:"const mensaje = 'Hola desde JavaScript';\nconsole.log(mensaje);\nconsole.log(6 * 7);",python:"mensaje = 'Hola desde Python'\nprint(mensaje)\nprint(6 * 7)"};
+const lang=document.querySelector('#language'),code=document.querySelector('#code'),button=document.querySelector('#run'),output=document.querySelector('#output'),status=document.querySelector('#status');
+code.value=examples[lang.value];lang.addEventListener('change',()=>code.value=examples[lang.value]);
+button.addEventListener('click',async()=>{button.disabled=true;status.textContent='Ejecutando…';output.className='output';output.textContent='';try{const response=await fetch('/api/run',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({language:lang.value,code:code.value})});const result=await response.json();if(!response.ok)throw new Error(result.error||'Error al ejecutar');output.textContent=result.output+(result.error?`\n${result.error}`:'')||'(sin salida)';if(result.exitCode!==0)output.classList.add('error');status.textContent=`Terminado · código de salida ${result.exitCode}`;}catch(error){output.textContent=error.message;output.classList.add('error');status.textContent='No se pudo ejecutar.';}finally{button.disabled=false;}});
+</script></body></html>
