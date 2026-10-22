@@ -15,7 +15,7 @@ const valid = `aplicacion "Mi app" {
 test('parsea las instrucciones básicas', () => {
   assert.deepEqual(parseZafiroWebScript(valid), {
     name: 'Mi app', title: 'Hola <Zafiro>', description: 'Ejemplo', button: 'Compartir', theme: 'claro',
-    variables: {}, types: {}, functions: {}, conditions: [], imports: []
+    variables: {}, types: {}, functions: {}, conditions: [], imports: [], tables: {}, forms: [], queries: [], parameters: {}
   });
 });
 
@@ -143,4 +143,45 @@ test('genera archivos PWA enlazados y un service worker con caché offline', () 
   assert.match(assets.icon, /<svg/);
   assert.match(assets.serviceWorker, /caches\.open/);
   assert.match(assets.serviceWorker, /zafiro-app\.html/);
+});
+
+const dataProgram = `aplicacion "Directorio" {
+  usar datos
+  tabla contactos {
+    campo id: numero clave
+    campo nombre: texto
+    campo activo: booleano
+  }
+  formulario contactos {
+    campo nombre "Nombre" requerido
+    campo activo "Activo" requerido
+  }
+  parametro soloActivos: booleano = verdadero
+  consulta contactos selecciona nombre, activo donde activo == :soloActivos limite 25
+  titulo "Directorio"
+  descripcion "Datos locales"
+  tema oscuro
+  boton "Compartir ubicación" {
+    permiso ubicacion al_pulsar
+    mostrar coordenadas
+  }
+}`;
+
+test('declara esquemas, formularios y consultas parametrizadas con datos locales', () => {
+  const app = parseZafiroWebScript(dataProgram);
+  assert.equal(app.tables.contactos.fields.length, 3);
+  assert.equal(app.forms[0].fields[0].type, 'texto');
+  assert.deepEqual(app.queries[0], { table: 'contactos', fields: ['nombre', 'activo'], filter: { field: 'activo', operator: '==', value: true }, limit: 25 });
+  const html = compileZafiroWebScript(dataProgram);
+  assert.match(html, /localStorage/);
+  assert.match(html, /Autorizo guardar estos datos en este dispositivo/);
+  assert.match(html, /textContent/);
+  assert.doesNotMatch(html, /innerHTML|eval\(/);
+});
+
+test('rechaza columnas desconocidas, parámetros ausentes, tipos incompatibles y límites excesivos', () => {
+  assert.throws(() => parseZafiroWebScript(dataProgram.replace('selecciona nombre, activo', 'selecciona secreto, activo')), /no existe en contactos/);
+  assert.throws(() => parseZafiroWebScript(dataProgram.replace(':soloActivos', ':ausente')), /parámetro ":ausente" no existe/);
+  assert.throws(() => parseZafiroWebScript(dataProgram.replace('activo == :soloActivos', 'nombre == :soloActivos')), /filtro debe ser de tipo texto/);
+  assert.throws(() => parseZafiroWebScript(dataProgram.replace('limite 25', 'limite 101')), /entre 1 y 100/);
 });

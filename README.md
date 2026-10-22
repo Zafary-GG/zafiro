@@ -10,7 +10,9 @@ La guía detallada está en [INSTALL.md](INSTALL.md). El proyecto incluye licenc
 
 El lenguaje propio de Zafiro está en [`site/language-studio.html`](site/language-studio.html). El editor muestra una vista previa y compila un programa `.zafiro` a un archivo HTML independiente. El ejemplo de ubicación está en [`examples/ubicacion_web.zafiro`](examples/ubicacion_web.zafiro).
 
-WebScript 0.4 añade una CLI para crear, validar y compilar proyectos. Admite módulos `.zfm` externos y locales (`usar "./modules/archivo.zfm"`), alias y anotaciones de tipos básicos (`texto`, `numero`, `booleano`), ciclos `repetir` ascendentes limitados a 101 pasos y una biblioteca estándar explícita (`usar texto`, `usar numeros`). La extensión de VS Code (`editors/vscode`) incluye resaltado, diagnósticos sintácticos, sugerencias y el comando **Zafiro: Compilar proyecto WebScript**. La CLI genera HTML, manifiesto PWA, icono SVG y service worker, listos para publicar juntos bajo HTTPS.
+WebScript 0.4 añade una CLI para crear, validar y compilar proyectos. Admite módulos `.zfm` externos y locales (`usar "./modules/archivo.zfm"`), tipos básicos, ciclos acotados y bibliotecas explícitas (`usar texto`, `usar numeros`). El módulo `usar datos` permite declarar esquemas (`tabla`), formularios con consentimiento y consultas estructuradas con parámetros, filtros y límites. Los registros se validan y quedan en el almacenamiento local del navegador; Zafiro no genera ni ejecuta SQL libre.
+
+La extensión de VS Code (`editors/vscode`) incluye resaltado, diagnósticos sintácticos, sugerencias y el comando **Zafiro: Compilar proyecto WebScript**. La CLI genera HTML, manifiesto PWA, icono SVG y service worker, listos para publicar juntos bajo HTTPS.
 
 Desde la raíz del repositorio, crea y compila un proyecto sin instalar dependencias externas:
 
@@ -26,6 +28,12 @@ npm run build
 WebScript sigue siendo un lenguaje de dominio temprano, no de propósito general. Los módulos importados son locales a la carpeta del proyecto; los tipos son anotaciones básicas y los ciclos solo acumulan una expresión. Aún faltan módulos publicados/gestor de paquetes, tipos estáticos completos, una biblioteca extensible, validación semántica completa en VS Code, navegación entre pantallas y compilación a APK/IPA nativos.
 
 La app de ejemplo puede solicitar la ubicación del dispositivo que la está usando. La Geolocation API requiere HTTPS o localhost; el navegador pide el permiso cuando la persona toca el botón. Las coordenadas se muestran localmente: no localiza teléfonos por número o dispositivos ajenos y no las envía al servidor.
+
+### Datos en WebScript
+
+El almacenamiento del módulo `datos` pertenece al navegador y al dispositivo donde se abre la app. Formularios piden consentimiento antes de guardar; se limitan a 500 registros por tabla, 32 campos por tabla, 16 campos por formulario y texto de hasta 200 caracteres. Las consultas solo seleccionan columnas declaradas, aceptan filtros tipados y parámetros y limitan resultados a 100. Los valores se presentan como texto seguro y la interfaz permite borrar los registros locales.
+
+Esto sirve para prototipos y apps de un solo dispositivo, no es una base de datos SQL ni sincroniza usuarios. Para datos compartidos entre usuarios, hacen falta un backend autenticado, autorización por usuario, transporte HTTPS, controles de acceso y copias de seguridad. No almacenes secretos o datos sensibles en `localStorage`.
 
 Para ejecutar sus pruebas con Node.js 22 o posterior: `npm run test:webscript`.
 

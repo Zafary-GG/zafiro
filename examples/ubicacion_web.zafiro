@@ -6,11 +6,22 @@ aplicacion "Mi app" {
   usar bienvenida
   usar texto
   usar numeros
+  usar datos
   # Variables, expresiones y una funcion reutilizable.
   variable marca = "Zafiro"
   variable version = 1 + 1
   tipo Contador = numero
   variable intentos: Contador = 0
+  tabla contactos {
+    campo id: numero clave
+    campo nombre: texto
+    campo correo: texto
+  }
+  formulario contactos {
+    campo nombre "Tu nombre" requerido
+    campo correo "Tu correo" requerido
+  }
+  consulta contactos selecciona nombre, correo limite 20
   titulo {{ saludo(marca) }}
   descripcion "Una pequeña aplicación web hecha con Zafiro."
   tema oscuro

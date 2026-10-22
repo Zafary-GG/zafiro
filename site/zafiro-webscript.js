@@ -143,18 +143,89 @@ export function parseZafiroWebScript(source) {
   const appLine = lines[0];
   const appMatch = appLine?.text.match(new RegExp(`^aplicacion\\s+${quoted}\\s*\\{$`));
   if (!appMatch) lineError(appLine?.number ?? 1, 'se esperaba aplicacion "Nombre" {');
-  const app = { name: decodeString(appMatch[1], appLine.number), title: '', description: '', button: '', theme: 'oscuro', variables: {}, types: {}, functions: {}, conditions: [], imports: [] };
-  let buttonOpen = false, appClosed = false, locationPermission = false, showCoordinates = false, closeIndex = -1;
+  const app = { name: decodeString(appMatch[1], appLine.number), title: '', description: '', button: '', theme: 'oscuro', variables: {}, types: {}, functions: {}, conditions: [], imports: [], tables: {}, forms: [], queries: [], parameters: {} };
+  let buttonOpen = false, tableOpen = '', formOpen = '', appClosed = false, locationPermission = false, showCoordinates = false, closeIndex = -1;
 
   for (let index = 1; index < lines.length; index += 1) {
     const line = lines[index];
+    if (tableOpen) {
+      if (line.text === '}') { tableOpen = ''; continue; }
+      const field = line.text.match(/^campo\s+([A-Za-z_][A-Za-z0-9_]*)\s*:\s*(texto|numero|booleano)(?:\s+(clave))?$/);
+      if (!field) lineError(line.number, 'campo inválido; usa campo nombre: texto|numero|booleano [clave].');
+      const table = app.tables[tableOpen];
+      if (table.fields.some(item => item.name === field[1])) lineError(line.number, `el campo "${field[1]}" ya existe en ${tableOpen}.`);
+      if (table.fields.length >= 32) lineError(line.number, 'cada tabla admite un máximo de 32 campos.');
+      if (field[3] && table.fields.some(item => item.primary)) lineError(line.number, `la tabla "${tableOpen}" ya tiene una clave primaria.`);
+      table.fields.push({ name: field[1], type: field[2], primary: Boolean(field[3]) });
+      continue;
+    }
+    if (formOpen) {
+      if (line.text === '}') { formOpen = ''; continue; }
+      const field = line.text.match(new RegExp(`^campo\\s+([A-Za-z_][A-Za-z0-9_]*)\\s+${quoted}(?:\\s+(requerido|opcional))?$`));
+      if (!field) lineError(line.number, 'campo de formulario inválido; usa campo nombre "Etiqueta" [requerido|opcional].');
+      const schemaField = app.tables[formOpen]?.fields.find(item => item.name === field[1]);
+      if (!schemaField) lineError(line.number, `el campo "${field[1]}" no existe en la tabla "${formOpen}".`);
+      if (schemaField.primary && schemaField.type === 'numero') lineError(line.number, 'la clave numérica se genera automáticamente y no va en el formulario.');
+      const form = app.forms.find(item => item.table === formOpen);
+      if (form.fields.some(item => item.name === field[1])) lineError(line.number, `el campo "${field[1]}" ya está en el formulario.`);
+      if (form.fields.length >= 16) lineError(line.number, 'cada formulario admite un máximo de 16 campos.');
+      form.fields.push({ name: field[1], label: decodeString(field[2], line.number), required: field[3] !== 'opcional', type: schemaField.type });
+      continue;
+    }
     if (buttonOpen && line.text === '}') { buttonOpen = false; continue; }
     if (!buttonOpen && line.text === '}') { appClosed = true; closeIndex = index; break; }
     if (buttonOpen && line.text === 'permiso ubicacion al_pulsar') { locationPermission = true; continue; }
     if (buttonOpen && line.text === 'mostrar coordenadas') { showCoordinates = true; continue; }
     if (buttonOpen) lineError(line.number, 'instrucción desconocida dentro de boton.');
 
-    let match = line.text.match(/^titulo\s+(.+)$/);
+    let match = line.text.match(/^tabla\s+([A-Za-z_][A-Za-z0-9_]*)\s*\{$/);
+    if (match) {
+      if (!app.imports.includes('datos')) lineError(line.number, 'importa primero "datos" para declarar tablas.');
+      if (Object.hasOwn(app.tables, match[1])) lineError(line.number, `la tabla "${match[1]}" ya existe.`);
+      app.tables[match[1]] = { fields: [] }; tableOpen = match[1]; continue;
+    }
+    match = line.text.match(/^formulario\s+([A-Za-z_][A-Za-z0-9_]*)\s*\{$/);
+    if (match) {
+      if (!app.imports.includes('datos')) lineError(line.number, 'importa primero "datos" para declarar formularios.');
+      if (!app.tables[match[1]]) lineError(line.number, `declara primero la tabla "${match[1]}".`);
+      if (app.forms.some(form => form.table === match[1])) lineError(line.number, `la tabla "${match[1]}" ya tiene un formulario.`);
+      app.forms.push({ table: match[1], fields: [] }); formOpen = match[1]; continue;
+    }
+    match = line.text.match(/^parametro\s+([A-Za-z_][A-Za-z0-9_]*)\s*:\s*(texto|numero|booleano)\s*=\s*(.+)$/);
+    if (match) {
+      if (!app.imports.includes('datos')) lineError(line.number, 'importa primero "datos" para declarar parámetros.');
+      if (Object.hasOwn(app.parameters, match[1])) lineError(line.number, `el parámetro "${match[1]}" ya existe.`);
+      const value = resolveValue(match[3], app.variables, app.functions, line.number);
+      const type = match[2];
+      if (type === 'texto' ? typeof value !== 'string' : type === 'numero' ? typeof value !== 'number' || !Number.isFinite(value) : typeof value !== 'boolean') lineError(line.number, `el valor del parámetro debe ser ${type}.`);
+      app.parameters[match[1]] = { type, value }; continue;
+    }
+    match = line.text.match(/^consulta\s+([A-Za-z_][A-Za-z0-9_]*)\s+selecciona\s+(\*|[A-Za-z_][A-Za-z0-9_]*(?:\s*,\s*[A-Za-z_][A-Za-z0-9_]*)*)(?:\s+donde\s+([A-Za-z_][A-Za-z0-9_]*)\s*(==|!=|<|>|<=|>=)\s*(?::([A-Za-z_][A-Za-z0-9_]*)|("(?:\\.|[^"\\])*")|(-?\d+(?:\.\d+)?)|(verdadero|falso)))?\s+limite\s+(\d+)$/);
+    if (match) {
+      if (!app.imports.includes('datos')) lineError(line.number, 'importa primero "datos" para declarar consultas.');
+      const table = app.tables[match[1]];
+      if (!table) lineError(line.number, `la tabla "${match[1]}" no existe.`);
+      const fields = match[2] === '*' ? table.fields.map(field => field.name) : match[2].split(',').map(field => field.trim());
+      for (const field of fields) if (!table.fields.some(item => item.name === field)) lineError(line.number, `el campo de consulta "${field}" no existe en ${match[1]}.`);
+      let filter = null;
+      if (match[3]) {
+        const schemaField = table.fields.find(item => item.name === match[3]);
+        let value, type;
+        if (match[5]) {
+          if (!Object.hasOwn(app.parameters, match[5])) lineError(line.number, `el parámetro ":${match[5]}" no existe.`);
+          ({ value, type } = app.parameters[match[5]]);
+        } else if (match[6]) { value = decodeString(match[6], line.number); type = 'texto'; }
+        else if (match[7]) { value = Number(match[7]); type = 'numero'; }
+        else { value = match[8] === 'verdadero'; type = 'booleano'; }
+        if (schemaField.type !== type) lineError(line.number, `el filtro debe ser de tipo ${schemaField.type}.`);
+        filter = { field: match[3], operator: match[4], value };
+      }
+      const limit = Number(match[10] || match[9]);
+      if (!Number.isInteger(limit) || limit < 1 || limit > 100) lineError(line.number, 'el límite de consulta debe estar entre 1 y 100.');
+      app.queries.push({ table: match[1], fields, filter, limit }); continue;
+    }
+
+    match = line.text.match(/^titulo\s+(.+)$/);
     if (match) { app.title = displayValue(match[1], app.variables, app.functions, line.number); continue; }
     match = line.text.match(/^descripcion\s+(.+)$/);
     if (match) { app.description = displayValue(match[1], app.variables, app.functions, line.number); continue; }
@@ -170,7 +241,7 @@ export function parseZafiroWebScript(source) {
         index -= 1;
         continue;
       }
-      if (['texto', 'numeros'].includes(moduleName)) { app.imports.push(moduleName); app.functions.__modules = app.imports; continue; }
+      if (['texto', 'numeros', 'datos'].includes(moduleName)) { app.imports.push(moduleName); app.functions.__modules = app.imports; continue; }
       lineError(line.number, `el módulo "${moduleName}" no está declarado en este archivo ni en la biblioteca estándar.`);
     }
     match = line.text.match(/^repetir\s+([A-Za-z_][A-Za-z0-9_]*)\s+desde\s+(.+?)\s+hasta\s+(.+?)\s+entonces\s+variable\s+([A-Za-z_][A-Za-z0-9_]*)\s*=\s*(.+)$/);
@@ -219,10 +290,17 @@ export function parseZafiroWebScript(source) {
     lineError(line.number, 'instrucción desconocida o fuera de lugar.');
   }
   if (buttonOpen) throw new SyntaxError('Falta cerrar el bloque del botón con }.');
+  if (tableOpen) throw new SyntaxError(`Falta cerrar la tabla "${tableOpen}" con }.`);
+  if (formOpen) throw new SyntaxError(`Falta cerrar el formulario "${formOpen}" con }.`);
   if (!appClosed) throw new SyntaxError('Falta cerrar el bloque de aplicacion con }.');
   if (closeIndex !== lines.length - 1) lineError(lines[closeIndex + 1].number, 'hay instrucciones después del cierre de la aplicación.');
   if (!app.name || !app.title || !app.description || !app.button) throw new SyntaxError('La aplicación necesita nombre, titulo, descripcion y boton.');
   if (!locationPermission || !showCoordinates) throw new SyntaxError('El botón debe declarar permiso ubicacion al_pulsar y mostrar coordenadas.');
+  for (const [name, table] of Object.entries(app.tables)) {
+    if (!table.fields.length) throw new SyntaxError(`La tabla "${name}" debe declarar al menos un campo.`);
+    if (table.fields.filter(field => field.primary).length > 1) throw new SyntaxError(`La tabla "${name}" solo puede tener una clave primaria.`);
+  }
+  for (const form of app.forms) if (!form.fields.length) throw new SyntaxError(`El formulario "${form.table}" debe tener al menos un campo.`);
   for (const condition of app.conditions) {
     const result = resolveValue(condition.condition, app.variables, app.functions, condition.line);
     if (typeof result !== 'boolean') lineError(condition.line, 'la condición debe producir verdadero o falso.');
@@ -241,11 +319,15 @@ export function compileZafiroWebScript(source) {
   const colors = app.theme === 'claro'
     ? { background: '#f4f7f5', foreground: '#15231e', muted: '#53645d', accent: '#147a56' }
     : { background: '#10191d', foreground: '#eaf1ed', muted: '#aab9b4', accent: '#a6efd0' };
+  const dataModel = JSON.stringify({ app: app.name, tables: app.tables, forms: app.forms, queries: app.queries }).replace(/</g, '\\u003c').replace(/\u2028/g, '\\u2028').replace(/\u2029/g, '\\u2029');
+  const dataScript = `if(MODEL.tables&&Object.keys(MODEL.tables).length){const root=document.querySelector('#data-ui'),key='zafiro.webscript.'+encodeURIComponent(MODEL.app);const read=name=>{try{const rows=JSON.parse(localStorage.getItem(key+'.'+name)||'[]');if(!Array.isArray(rows))return[];const schema=MODEL.tables[name].fields;return rows.slice(0,500).filter(row=>row&&typeof row==='object'&&!Array.isArray(row)&&schema.every(field=>field.primary&&field.type==='numero'?Number.isSafeInteger(row[field.name])&&row[field.name]>0:field.type==='texto'?typeof row[field.name]==='string'&&row[field.name].length<=200:field.type==='numero'?typeof row[field.name]==='number'&&Number.isFinite(row[field.name]):typeof row[field.name]==='boolean'));}catch{return[]}};const write=(name,rows)=>localStorage.setItem(key+'.'+name,JSON.stringify(rows));const heading=(tag,text)=>{const el=document.createElement(tag);el.textContent=text;return el};const cell=(row,name)=>{const td=document.createElement('td');td.textContent=row[name]===undefined?'':String(row[name]);return td};const render=()=>{root.replaceChildren();for(const form of MODEL.forms){const schema=MODEL.tables[form.table],formEl=document.createElement('form');formEl.append(heading('h3','Agregar a '+form.table));const inputs={};for(const field of form.fields){const label=document.createElement('label');label.append(document.createTextNode(field.label+' '));const input=document.createElement('input');input.name=field.name;input.required=field.required;input.maxLength=200;if(field.type==='numero')input.type='number';else if(field.type==='booleano')input.type='checkbox';else input.type=/correo|email/i.test(field.name)?'email':'text';inputs[field.name]=input;label.append(input);formEl.append(label,document.createElement('br'));}const consent=document.createElement('input');consent.type='checkbox';consent.required=true;const consentLabel=document.createElement('label');consentLabel.append(consent,document.createTextNode(' Autorizo guardar estos datos en este dispositivo.'));formEl.append(consentLabel,document.createElement('br'));const submit=document.createElement('button');submit.type='submit';submit.textContent='Guardar';formEl.append(submit);const status=heading('p','');status.setAttribute('role','status');formEl.append(status);formEl.addEventListener('submit',event=>{event.preventDefault();if(!consent.checked)return;const rows=read(form.table);if(rows.length>=500){status.textContent='Se alcanzó el límite local de 500 registros.';return;}const record={};for(const field of form.fields){const input=inputs[field.name];record[field.name]=field.type==='booleano'?input.checked:field.type==='numero'?Number(input.value):input.value.trim();if(typeof record[field.name]==='string'&&record[field.name].length>200){status.textContent='El texto excede 200 caracteres.';return;}if(field.type==='numero'&&!Number.isFinite(record[field.name])){status.textContent='Ingresa un número válido.';return;}}const primary=schema.fields.find(field=>field.primary);if(primary){if(primary.type==='numero')record[primary.name]=rows.reduce((max,row)=>Math.max(max,Number(row[primary.name])||0),0)+1;else if(rows.some(row=>row[primary.name]===record[primary.name])){status.textContent='La clave ya existe.';return;}}rows.push(record);try{write(form.table,rows);formEl.reset();status.textContent='Registro guardado en este dispositivo.';render();}catch{status.textContent='No fue posible guardar; el almacenamiento local puede estar lleno o deshabilitado.';}});root.append(formEl);}for(const query of MODEL.queries){root.append(heading('h3','Consulta: '+query.table));const table=document.createElement('table'),thead=document.createElement('thead'),tr=document.createElement('tr');for(const field of query.fields)tr.append(heading('th',field));thead.append(tr);table.append(thead);const body=document.createElement('tbody');let rows=read(query.table);if(query.filter){const f=query.filter;rows=rows.filter(row=>{const value=row[f.field];switch(f.operator){case'==':return value===f.value;case'!=':return value!==f.value;case'<':return value<f.value;case'>':return value>f.value;case'<=':return value<=f.value;case'>=':return value>=f.value;default:return false;}});}for(const row of rows.slice(0,query.limit)){const tr=document.createElement('tr');for(const field of query.fields)tr.append(cell(row,field));body.append(tr);}table.append(body);root.append(table);}for(const [name] of Object.entries(MODEL.tables)){const remove=document.createElement('button');remove.type='button';remove.textContent='Borrar datos de '+name;remove.addEventListener('click',()=>{if(confirm('¿Borrar todos los datos guardados en este navegador?')){localStorage.removeItem(key+'.'+name);render();}});root.append(remove);}};render();}`;
+  const databaseMarkup = Object.keys(app.tables).length ? '<section id="database" aria-label="Datos locales"><h2>Datos de esta aplicación</h2><p>Los registros se guardan solo en este navegador. No se envían a un servidor.</p><div id="data-ui"></div></section>' : '';
   return `<!doctype html>
 <html lang="es"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="color-scheme" content="${app.theme === 'claro' ? 'light' : 'dark'}"><meta name="theme-color" content="${colors.background}"><link rel="manifest" href="manifest.webmanifest"><link rel="icon" href="icon.svg" type="image/svg+xml"><title>${escapeHtml(app.title)}</title>
 <style>body{margin:0;min-height:100vh;display:grid;place-items:center;background:${colors.background};color:${colors.foreground};font:16px/1.6 system-ui,sans-serif}.app{width:min(560px,calc(100% - 40px));padding:28px 0}h1{font-size:clamp(32px,8vw,48px);line-height:1.08;letter-spacing:-.04em}p{color:${colors.muted}}button{border:0;border-radius:8px;background:${colors.accent};color:${app.theme === 'claro' ? '#fff' : '#10231d'};font:700 15px system-ui;padding:13px 18px;cursor:pointer}button:focus-visible{outline:3px solid ${colors.foreground};outline-offset:3px}#result{margin-top:22px;overflow-wrap:anywhere}.privacy{font-size:12px;border-top:1px solid ${colors.muted}55;padding-top:14px}</style></head>
-<body><main class="app"><p>${escapeHtml(app.name)}</p><h1>${escapeHtml(app.title)}</h1><p>${escapeHtml(app.description)}</p><button id="locate" type="button">${escapeHtml(app.button)}</button><p id="result" role="status" aria-live="polite">La ubicación aparecerá aquí solo si das permiso.</p><p class="privacy">Esta app solicita una lectura de ubicación cuando pulsas el botón. Las coordenadas se muestran en este dispositivo y no se envían a un servidor.</p></main>
-<script>const button=document.querySelector('#locate');const result=document.querySelector('#result');button.addEventListener('click',()=>{if(!('geolocation' in navigator)){result.textContent='Este navegador no ofrece geolocalización.';return;}button.disabled=true;result.textContent='Esperando permiso y ubicación…';navigator.geolocation.getCurrentPosition(position=>{result.textContent='Latitud: '+position.coords.latitude+' · Longitud: '+position.coords.longitude+' · Precisión aproximada: '+Math.round(position.coords.accuracy)+' m';button.disabled=false;},error=>{result.textContent=error.code===1?'No se concedió el permiso de ubicación.':error.code===2?'El dispositivo no pudo determinar la ubicación.':'La solicitud de ubicación agotó el tiempo.';button.disabled=false;},{enableHighAccuracy:false,maximumAge:0,timeout:15000});});if('serviceWorker' in navigator&&location.protocol.startsWith('http'))navigator.serviceWorker.register('./sw.js').catch(()=>{});</script></body></html>`;
+<body><main class="app"><p>${escapeHtml(app.name)}</p><h1>${escapeHtml(app.title)}</h1><p>${escapeHtml(app.description)}</p><button id="locate" type="button">${escapeHtml(app.button)}</button><p id="result" role="status" aria-live="polite">La ubicación aparecerá aquí solo si das permiso.</p>${databaseMarkup}<p class="privacy">Esta app solicita la ubicación solo al pulsar el botón. Los datos de formularios requieren consentimiento y permanecen en este navegador; no se envían a un servidor.</p></main>
+<script>const MODEL=${dataModel};const button=document.querySelector('#locate');const result=document.querySelector('#result');button.addEventListener('click',()=>{if(!('geolocation' in navigator)){result.textContent='Este navegador no ofrece geolocalización.';return;}button.disabled=true;result.textContent='Esperando permiso y ubicación…';navigator.geolocation.getCurrentPosition(position=>{result.textContent='Latitud: '+position.coords.latitude+' · Longitud: '+position.coords.longitude+' · Precisión aproximada: '+Math.round(position.coords.accuracy)+' m';button.disabled=false;},error=>{result.textContent=error.code===1?'No se concedió el permiso de ubicación.':error.code===2?'El dispositivo no pudo determinar la ubicación.':'La solicitud de ubicación agotó el tiempo.';button.disabled=false;},{enableHighAccuracy:false,maximumAge:0,timeout:15000});});${dataScript}
+if('serviceWorker' in navigator&&location.protocol.startsWith('http'))navigator.serviceWorker.register('./sw.js').catch(()=>{});</script></body></html>`;
 }
 
 export function createZafiroPwaAssets(source) {

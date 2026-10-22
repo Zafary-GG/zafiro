@@ -8,11 +8,22 @@ aplicacion "Mi app" {
   usar bienvenida
   usar texto
   usar numeros
+  usar datos
   variable nombre = "Zafiro"
   variable visitas = 3 * 4
   variable etiqueta: texto = mayusculas("zafiro")
   tipo Intentos = numero
   variable intentos: Intentos = 0
+  tabla contactos {
+    campo id: numero clave
+    campo nombre: texto
+    campo correo: texto
+  }
+  formulario contactos {
+    campo nombre "Tu nombre" requerido
+    campo correo "Tu correo" requerido
+  }
+  consulta contactos selecciona nombre, correo limite 20
   titulo {{ saludo(nombre) }}
   descripcion "Esta página se generó con Zafiro WebScript."
   tema oscuro
@@ -56,9 +67,13 @@ function renderPreview() {
   const description = document.createElement('p'); description.className = 'preview-description'; description.textContent = app.description;
   const button = document.createElement('button'); button.type = 'button'; button.className = 'preview-locate'; button.textContent = app.button;
   const result = document.createElement('p'); result.className = 'preview-result'; result.setAttribute('role', 'status'); result.textContent = 'La ubicación aparecerá aquí solo si das permiso.';
-  const privacy = document.createElement('p'); privacy.className = 'preview-privacy'; privacy.textContent = 'La ubicación se pide al pulsar el botón y se muestra en este dispositivo.';
+  const privacy = document.createElement('p'); privacy.className = 'preview-privacy'; privacy.textContent = 'La ubicación se pide al pulsar el botón. Los formularios compilados guardan registros localmente tras tu consentimiento.';
   button.addEventListener('click', () => requestLocation(button, result));
   content.append(brand, heading, description, button, result, privacy);
+  if (Object.keys(app.tables).length) {
+    const dataNote = document.createElement('p'); dataNote.textContent = `Datos locales: ${Object.keys(app.tables).join(', ')} · ${app.forms.length} formulario(s) · ${app.queries.length} consulta(s). El proyecto compilado ofrecerá captura y borrado de registros.`;
+    content.append(dataNote);
+  }
   preview.append(content);
   status.textContent = 'Compilación correcta. La vista previa se actualizó.';
 }
