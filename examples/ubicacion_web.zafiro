@@ -7,6 +7,7 @@ aplicacion "Mi app" {
   usar texto
   usar numeros
   usar datos
+  usar inspeccion_web
   # Variables, expresiones y una funcion reutilizable.
   variable marca = "Zafiro"
   variable version = 1 + 1
@@ -22,6 +23,7 @@ aplicacion "Mi app" {
     campo correo "Tu correo" requerido
   }
   consulta contactos selecciona nombre, correo limite 20
+  inspeccionar web paginas 8
   titulo {{ saludo(marca) }}
   descripcion "Una pequeña aplicación web hecha con Zafiro."
   tema oscuro

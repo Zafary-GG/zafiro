@@ -3,7 +3,7 @@ const path = require('node:path');
 const fs = require('node:fs');
 const { execFile } = require('node:child_process');
 
-const keywords = ['aplicacion', 'modulo', 'variable', 'tipo', 'funcion', 'si', 'entonces', 'repetir', 'usar', 'desde', 'hasta', 'titulo', 'descripcion', 'tema', 'boton', 'permiso', 'mostrar', 'texto', 'numero', 'booleano', 'verdadero', 'falso', 'claro', 'oscuro', 'datos', 'tabla', 'campo', 'clave', 'formulario', 'requerido', 'opcional', 'parametro', 'consulta', 'selecciona', 'donde', 'limite'];
+const keywords = ['aplicacion', 'modulo', 'variable', 'tipo', 'funcion', 'si', 'entonces', 'repetir', 'usar', 'desde', 'hasta', 'titulo', 'descripcion', 'tema', 'boton', 'permiso', 'mostrar', 'texto', 'numero', 'booleano', 'verdadero', 'falso', 'claro', 'oscuro', 'datos', 'tabla', 'campo', 'clave', 'formulario', 'requerido', 'opcional', 'parametro', 'consulta', 'selecciona', 'donde', 'limite', 'inspeccion_web', 'inspeccionar', 'web', 'paginas'];
 const builtins = ['mayusculas', 'minusculas', 'longitud', 'redondear', 'minimo', 'maximo'];
 
 function activate(context) {
@@ -55,7 +55,7 @@ function activate(context) {
       if (/^(?:aplicacion\s+".*"|modulo\s+[A-Za-z_]\w*)\s*\{$/.test(line)) { appDepth += 1; if (line.startsWith('aplicacion')) appSeen = true; continue; }
       if (/^boton\s+".*"\s*\{$/.test(line)) { appDepth += 1; continue; }
       if (line === '}') { appDepth -= 1; if (appDepth < 0) { appDepth = 0; found.push(new vscode.Diagnostic(new vscode.Range(index, 0, index, document.lineAt(index).text.length), 'Cierre } sin bloque abierto.', vscode.DiagnosticSeverity.Error)); } continue; }
-      const isKnown = /^(?:titulo\s+|descripcion\s+|tema\s+(?:claro|oscuro)$|boton\s+|permiso\s+ubicacion\s+al_pulsar$|mostrar\s+coordenadas$|variable\s+|tipo\s+|funcion\s+|si\s+|repetir\s+|usar\s+(?:[A-Za-z_]\w*|".+\.zfm")|tabla\s+[A-Za-z_]\w*\s*\{|formulario\s+[A-Za-z_]\w*\s*\{|campo\s+|parametro\s+|consulta\s+)/.test(line);
+      const isKnown = /^(?:titulo\s+|descripcion\s+|tema\s+(?:claro|oscuro)$|boton\s+|permiso\s+ubicacion\s+al_pulsar$|mostrar\s+coordenadas$|variable\s+|tipo\s+|funcion\s+|si\s+|repetir\s+|usar\s+(?:[A-Za-z_]\w*|".+\.zfm")|tabla\s+[A-Za-z_]\w*\s*\{|formulario\s+[A-Za-z_]\w*\s*\{|campo\s+|parametro\s+|consulta\s+|inspeccionar\s+web\s+paginas\s+\d+$)/.test(line);
       if (!isKnown) found.push(new vscode.Diagnostic(new vscode.Range(index, 0, index, document.lineAt(index).text.length), 'Instrucción de Zafiro no reconocida.', vscode.DiagnosticSeverity.Error));
       if (/^tema\s+/.test(line) && !/^tema\s+(?:claro|oscuro)$/.test(line)) found.push(new vscode.Diagnostic(new vscode.Range(index, 0, index, document.lineAt(index).text.length), 'El tema debe ser claro u oscuro.', vscode.DiagnosticSeverity.Error));
       if (/^variable\s+/.test(line) && !/^variable\s+[A-Za-z_]\w*(?:\s*:\s*[A-Za-z_]\w*)?\s*=\s*.+$/.test(line)) found.push(new vscode.Diagnostic(new vscode.Range(index, 0, index, document.lineAt(index).text.length), 'Sintaxis: variable nombre[: tipo] = expresion.', vscode.DiagnosticSeverity.Error));

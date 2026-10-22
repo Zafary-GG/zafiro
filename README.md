@@ -10,7 +10,7 @@ La guía detallada está en [INSTALL.md](INSTALL.md). El proyecto incluye licenc
 
 El lenguaje propio de Zafiro está en [`site/language-studio.html`](site/language-studio.html). El editor muestra una vista previa y compila un programa `.zafiro` a un archivo HTML independiente. El ejemplo de ubicación está en [`examples/ubicacion_web.zafiro`](examples/ubicacion_web.zafiro).
 
-WebScript 0.4 añade una CLI para crear, validar y compilar proyectos. Admite módulos `.zfm` externos y locales (`usar "./modules/archivo.zfm"`), tipos básicos, ciclos acotados y bibliotecas explícitas (`usar texto`, `usar numeros`). El módulo `usar datos` permite declarar esquemas (`tabla`), formularios con consentimiento y consultas estructuradas con parámetros, filtros y límites. Los registros se validan y quedan en el almacenamiento local del navegador; Zafiro no genera ni ejecuta SQL libre.
+WebScript 0.4 añade una CLI para crear, validar y compilar proyectos. Admite módulos `.zfm` externos y locales (`usar "./modules/archivo.zfm"`), tipos básicos, ciclos acotados y bibliotecas explícitas (`usar texto`, `usar numeros`). El módulo `usar datos` permite declarar esquemas (`tabla`), formularios con consentimiento y consultas estructuradas con parámetros, filtros y límites. Los registros se validan y quedan en el almacenamiento local del navegador; Zafiro no genera ni ejecuta SQL libre. El módulo opcional `usar inspeccion_web` agrega un inventario pasivo de páginas HTTPS autorizadas con relaciones de enlaces y recursos, hosts observados, metadatos y algunos indicadores visibles.
 
 La extensión de VS Code (`editors/vscode`) incluye resaltado, diagnósticos sintácticos, sugerencias y el comando **Zafiro: Compilar proyecto WebScript**. La CLI genera HTML, manifiesto PWA, icono SVG y service worker, listos para publicar juntos bajo HTTPS.
 
@@ -34,6 +34,8 @@ La app de ejemplo puede solicitar la ubicación del dispositivo que la está usa
 El almacenamiento del módulo `datos` pertenece al navegador y al dispositivo donde se abre la app. Formularios piden consentimiento antes de guardar; se limitan a 500 registros por tabla, 32 campos por tabla, 16 campos por formulario y texto de hasta 200 caracteres. Las consultas solo seleccionan columnas declaradas, aceptan filtros tipados y parámetros y limitan resultados a 100. Los valores se presentan como texto seguro y la interfaz permite borrar los registros locales.
 
 Esto sirve para prototipos y apps de un solo dispositivo, no es una base de datos SQL ni sincroniza usuarios. Para datos compartidos entre usuarios, hacen falta un backend autenticado, autorización por usuario, transporte HTTPS, controles de acceso y copias de seguridad. No almacenes secretos o datos sensibles en `localStorage`.
+
+El inventario web lee como máximo 15 páginas del mismo origen, con una petición GET por página, sin credenciales, sin seguir redirecciones y con tope de 1 MB por documento. Requiere que el navegador pueda leer el HTML (mismo origen o CORS habilitado). Solo descubre hosts ya referenciados en enlaces y recursos visibles; no consulta DNS, no enumera subdominios, no prueba puertos ni busca vulnerabilidades. Los indicadores de tecnologías y cabeceras son parciales y no constituyen una auditoría de seguridad.
 
 Para ejecutar sus pruebas con Node.js 22 o posterior: `npm run test:webscript`.
 

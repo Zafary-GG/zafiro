@@ -15,7 +15,7 @@ const valid = `aplicacion "Mi app" {
 test('parsea las instrucciones básicas', () => {
   assert.deepEqual(parseZafiroWebScript(valid), {
     name: 'Mi app', title: 'Hola <Zafiro>', description: 'Ejemplo', button: 'Compartir', theme: 'claro',
-    variables: {}, types: {}, functions: {}, conditions: [], imports: [], tables: {}, forms: [], queries: [], parameters: {}
+    variables: {}, types: {}, functions: {}, conditions: [], imports: [], tables: {}, forms: [], queries: [], parameters: {}, webInspector: null
   });
 });
 
@@ -184,4 +184,26 @@ test('rechaza columnas desconocidas, parámetros ausentes, tipos incompatibles y
   assert.throws(() => parseZafiroWebScript(dataProgram.replace(':soloActivos', ':ausente')), /parámetro ":ausente" no existe/);
   assert.throws(() => parseZafiroWebScript(dataProgram.replace('activo == :soloActivos', 'nombre == :soloActivos')), /filtro debe ser de tipo texto/);
   assert.throws(() => parseZafiroWebScript(dataProgram.replace('limite 25', 'limite 101')), /entre 1 y 100/);
+});
+
+const webInspectorProgram = valid.replace('  titulo "Hola <Zafiro>"', '  usar inspeccion_web\n  inspeccionar web paginas 8\n  titulo "Hola <Zafiro>"');
+
+test('genera un inventario web pasivo con alcance limitado y consentimiento', () => {
+  const app = parseZafiroWebScript(webInspectorProgram);
+  assert.deepEqual(app.webInspector, { maxPages: 8 });
+  const html = compileZafiroWebScript(webInspectorProgram);
+  assert.match(html, /Confirmo que controlo este sitio o tengo autorización/);
+  assert.match(html, /redirect:'error'/);
+  assert.match(html, /credentials:'omit'/);
+  assert.match(html, /no se consultó DNS ni se buscaron subdominios/);
+  assert.match(html, /DOMParser/);
+  assert.match(html, /data-zafiro-src/);
+  assert.doesNotMatch(html, /innerHTML|eval\(/);
+  const script = html.slice(html.indexOf('<script>') + 8, html.indexOf('</script>'));
+  assert.doesNotThrow(() => new Function(script));
+});
+
+test('limita el inventario y exige importar el módulo', () => {
+  assert.throws(() => parseZafiroWebScript(valid.replace('  titulo "Hola <Zafiro>"', '  inspeccionar web paginas 3\n  titulo "Hola <Zafiro>"')), /importa primero "inspeccion_web"/);
+  assert.throws(() => parseZafiroWebScript(webInspectorProgram.replace('paginas 8', 'paginas 16')), /de 1 a 15 páginas/);
 });

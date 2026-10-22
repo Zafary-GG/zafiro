@@ -9,6 +9,7 @@ aplicacion "Mi app" {
   usar texto
   usar numeros
   usar datos
+  usar inspeccion_web
   variable nombre = "Zafiro"
   variable visitas = 3 * 4
   variable etiqueta: texto = mayusculas("zafiro")
@@ -24,6 +25,7 @@ aplicacion "Mi app" {
     campo correo "Tu correo" requerido
   }
   consulta contactos selecciona nombre, correo limite 20
+  inspeccionar web paginas 8
   titulo {{ saludo(nombre) }}
   descripcion "Esta página se generó con Zafiro WebScript."
   tema oscuro
@@ -73,6 +75,10 @@ function renderPreview() {
   if (Object.keys(app.tables).length) {
     const dataNote = document.createElement('p'); dataNote.textContent = `Datos locales: ${Object.keys(app.tables).join(', ')} · ${app.forms.length} formulario(s) · ${app.queries.length} consulta(s). El proyecto compilado ofrecerá captura y borrado de registros.`;
     content.append(dataNote);
+  }
+  if (app.webInspector) {
+    const inspectNote = document.createElement('p'); inspectNote.textContent = `Inventario web habilitado: hasta ${app.webInspector.maxPages} páginas HTTPS del mismo origen. El proyecto compilado solo lee HTML y referencias públicas, con confirmación de autorización.`;
+    content.append(inspectNote);
   }
   preview.append(content);
   status.textContent = 'Compilación correcta. La vista previa se actualizó.';

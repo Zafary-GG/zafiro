@@ -2,7 +2,7 @@
 
 ## Apps web con Zafiro WebScript
 
-Abre [`site/language-studio.html`](site/language-studio.html) en un navegador para escribir WebScript, revisar su vista previa y descargar HTML y los archivos auxiliares de la PWA. El archivo [`examples/ubicacion_web.zafiro`](examples/ubicacion_web.zafiro) muestra módulos locales, tipos básicos, formularios y consultas locales, variables, aritmética, funciones, condiciones y un ciclo acotado. El intérprete valida las expresiones admitidas y no ejecuta código arbitrario del usuario. La extensión para VS Code en [`editors/vscode`](editors/vscode) ofrece resaltado, diagnósticos sintácticos y autocompletado.
+Abre [`site/language-studio.html`](site/language-studio.html) en un navegador para escribir WebScript, revisar su vista previa y descargar HTML y los archivos auxiliares de la PWA. El archivo [`examples/ubicacion_web.zafiro`](examples/ubicacion_web.zafiro) muestra módulos locales, tipos básicos, formularios y consultas locales, inventario pasivo de sitios autorizados, variables, aritmética, funciones, condiciones y un ciclo acotado. El intérprete valida las expresiones admitidas y no ejecuta código arbitrario del usuario. La extensión para VS Code en [`editors/vscode`](editors/vscode) ofrece resaltado, diagnósticos sintácticos y autocompletado.
 
 La CLI requiere Node.js 22 o posterior y no necesita paquetes externos:
 

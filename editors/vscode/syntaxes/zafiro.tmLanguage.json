@@ -11,7 +11,7 @@
   "repository": {
     "comments": { "patterns": [{ "name": "comment.line.number-sign.zafiro", "match": "#.*$" }] },
     "strings": { "name": "string.quoted.double.zafiro", "begin": "\"", "end": "\"", "patterns": [{ "name": "constant.character.escape.zafiro", "match": "\\\\." }] },
-    "keywords": { "patterns": [{ "name": "keyword.control.zafiro", "match": "\\b(?:aplicacion|modulo|titulo|descripcion|tema|boton|permiso|mostrar|al_pulsar|coordenadas|variable|tipo|funcion|si|entonces|repetir|desde|hasta|usar|texto|numero|booleano|verdadero|falso|claro|oscuro|datos|tabla|campo|clave|formulario|requerido|opcional|parametro|consulta|selecciona|donde|limite)\\b" }] },
+    "keywords": { "patterns": [{ "name": "keyword.control.zafiro", "match": "\\b(?:aplicacion|modulo|titulo|descripcion|tema|boton|permiso|mostrar|al_pulsar|coordenadas|variable|tipo|funcion|si|entonces|repetir|desde|hasta|usar|texto|numero|booleano|verdadero|falso|claro|oscuro|datos|tabla|campo|clave|formulario|requerido|opcional|parametro|consulta|selecciona|donde|limite|inspeccion_web|inspeccionar|web|paginas)\\b" }] },
     "numbers": { "name": "constant.numeric.zafiro", "match": "\\b\\d+(?:\\.\\d+)?\\b" },
     "operators": { "name": "keyword.operator.zafiro", "match": "==|!=|<=|>=|[+*/<>-]|=" },
     "variables": { "name": "variable.other.zafiro", "match": "\\b[A-Za-z_][A-Za-z0-9_]*\\b" }
