@@ -122,4 +122,6 @@ int main() {
 
 ## Seguridad
 
-Los adaptadores ejecutan scripts en el proceso anfitrión. No son un sandbox; permite solo código de confianza. Para código de terceros usa aislamiento a nivel de sistema operativo.
+Zafiro sirve para automatizar tareas defensivas como revisar registros, correlacionar alertas y validar configuraciones con scripts conectados. El ejemplo [`examples/security_log_review.cpp`](examples/security_log_review.cpp) muestra un análisis local de registros de demostración.
+
+La librería coordina runtimes; no es un IDS ni un escáner y no sustituye herramientas especializadas. Los adaptadores ejecutan scripts en el proceso anfitrión. No son un sandbox; ejecuta análisis solo con autorización y usa aislamiento de sistema operativo para código no confiable.

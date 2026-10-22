@@ -153,6 +153,9 @@ if(ZAFIRO_WITH_PYTHON)
     if(ZAFIRO_BUILD_PYTHON_EXAMPLE)
         add_executable(zafiro_python_example examples/python.cpp)
         target_link_libraries(zafiro_python_example PRIVATE zafiro::python)
+
+        add_executable(zafiro_security_log_example examples/security_log_review.cpp)
+        target_link_libraries(zafiro_security_log_example PRIVATE zafiro::python)
     endif()
 
     if(BUILD_TESTING)

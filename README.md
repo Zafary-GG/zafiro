@@ -39,6 +39,17 @@ Para generar paquetes versionados ZIP y TGZ, compila Zafiro con los adaptadores 
 - Adaptador JavaScript: integra QuickJS-NG, captura `print` y `console`, conserva el contexto entre llamadas y propaga errores.
 - Adaptador Lua 5.4: integra Lua, captura salida, propaga errores y comparte datos.
 
+## Usos en ciberseguridad defensiva
+
+Zafiro también puede coordinar scripts para tareas defensivas: resumir registros de autenticación, correlacionar alertas, validar configuraciones y conectar herramientas internas. Por ejemplo, el programa [`examples/security_log_review.cpp`](examples/security_log_review.cpp) pasa registros de demostración de C++ a Python, cuenta fallos repetidos y devuelve alertas al contexto compartido.
+
+```sh
+cmake -S . -B build -DZAFIRO_WITH_PYTHON=ON
+cmake --build build --target zafiro_security_log_example
+```
+
+La librería aporta el puente entre lenguajes; no incluye un IDS, escáner de vulnerabilidades ni motor de detección. Los adaptadores ejecutan código en el mismo proceso y no son un sandbox: usa datos y sistemas que tengas autorización para analizar, y aísla aparte los scripts que no sean de confianza.
+
 ## Compartir valores y encadenar lenguajes
 
 Los scripts acceden al contexto como `zafiro` (diccionario en Python, objeto en JavaScript y tabla en Lua). El contexto de C++ permite precargar y recuperar datos:
