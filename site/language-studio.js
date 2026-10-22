@@ -1,13 +1,23 @@
-import { compileZafiroWebScript, parseZafiroWebScript } from './zafiro-webscript.js';
+import { compileZafiroWebScript, createZafiroPwaAssets, parseZafiroWebScript } from './zafiro-webscript.js';
 
-const example = `aplicacion "Mi app" {
+const example = `modulo bienvenida {
+  funcion saludo(persona) = "Una idea de " + persona
+}
+
+aplicacion "Mi app" {
+  usar bienvenida
+  usar texto
+  usar numeros
   variable nombre = "Zafiro"
   variable visitas = 3 * 4
-  funcion saludar(persona) = "Hola, " + persona
-  titulo {{ saludar(nombre) }}
+  variable etiqueta: texto = mayusculas("zafiro")
+  tipo Intentos = numero
+  variable intentos: Intentos = 0
+  titulo {{ saludo(nombre) }}
   descripcion "Esta página se generó con Zafiro WebScript."
   tema oscuro
-  si visitas >= 10 entonces titulo "{{ saludar(nombre) }}: {{ visitas }} ideas"
+  repetir i desde 1 hasta 5 entonces variable intentos = intentos + 1
+  si visitas >= 10 entonces titulo "{{ mayusculas(nombre) }}: {{ visitas }} ideas"
   boton "Compartir mi ubicación" {
     permiso ubicacion al_pulsar
     mostrar coordenadas
@@ -69,5 +79,18 @@ document.querySelector('#download-button').addEventListener('click', () => {
     status.textContent = 'App compilada y descargada como zafiro-app.html.';
   } catch (error) { status.textContent = error.message; }
 });
+
+document.querySelectorAll('[data-asset]').forEach(button => button.addEventListener('click', () => {
+  try {
+    const assets = createZafiroPwaAssets(source.value);
+    const key = button.dataset.asset;
+    const name = key === 'manifest' ? 'manifest.webmanifest' : key === 'icon' ? 'icon.svg' : 'sw.js';
+    const blob = new Blob([assets[key]], { type: key === 'manifest' ? 'application/manifest+json' : key === 'icon' ? 'image/svg+xml' : 'text/javascript' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a'); link.href = url; link.download = name; link.click();
+    setTimeout(() => URL.revokeObjectURL(url), 1000);
+    status.textContent = `Archivo ${name} descargado. Guárdalo junto al HTML.`;
+  } catch (error) { status.textContent = error.message; }
+}));
 
 renderPreview();

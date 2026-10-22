@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { compileZafiroWebScript, parseZafiroWebScript } from '../site/zafiro-webscript.js';
+import { compileZafiroWebScript, createZafiroPwaAssets, parseZafiroWebScript } from '../site/zafiro-webscript.js';
 
 const valid = `aplicacion "Mi app" {
   titulo "Hola <Zafiro>"
@@ -15,7 +15,7 @@ const valid = `aplicacion "Mi app" {
 test('parsea las instrucciones básicas', () => {
   assert.deepEqual(parseZafiroWebScript(valid), {
     name: 'Mi app', title: 'Hola <Zafiro>', description: 'Ejemplo', button: 'Compartir', theme: 'claro',
-    variables: {}, functions: {}, conditions: []
+    variables: {}, types: {}, functions: {}, conditions: [], imports: []
   });
 });
 
@@ -51,6 +51,59 @@ test('las condiciones verdaderas cambian textos; las falsas dejan el valor inici
   assert.equal(app.description, 'Ejemplo');
 });
 
+test('valida tipos y calcula un ciclo con tope de iteraciones', () => {
+  const app = parseZafiroWebScript(`aplicacion "Tipos y ciclo" {
+  variable saludo: texto = "hola"
+  variable listo: booleano = verdadero
+  variable total: numero = 0
+  repetir i desde 1 hasta 5 entonces variable total = total + i
+  titulo {{ mayusculas(saludo) }}
+  descripcion "Listo"
+  tema oscuro
+  boton "Compartir" {
+    permiso ubicacion al_pulsar
+    mostrar coordenadas
+  }
+}`.replace('  titulo {{ mayusculas(saludo) }}', '  usar texto\n  titulo {{ mayusculas(saludo) }}'));
+  assert.equal(app.title, 'HOLA');
+  assert.equal(app.variables.total, 15);
+  assert.equal(app.variables.i, 5);
+  assert.equal(app.types.saludo, 'texto');
+  assert.equal(app.types.listo, 'booleano');
+});
+
+test('provee módulos de estándar con importación explícita y valida tipo', () => {
+  assert.throws(() => parseZafiroWebScript(`aplicacion "Error" {\n variable valor = mayusculas("a")\n titulo "A"\n descripcion "B"\n tema oscuro\n boton "Compartir" {\n permiso ubicacion al_pulsar\n mostrar coordenadas\n }\n}`), /importa primero el módulo "texto"/);
+  assert.throws(() => parseZafiroWebScript(`aplicacion "Error" {\n variable valor: numero = "no"\n titulo "A"\n descripcion "B"\n tema oscuro\n boton "Compartir" {\n permiso ubicacion al_pulsar\n mostrar coordenadas\n }\n}`), /no coincide con el tipo numero/);
+});
+
+test('importa funciones desde módulos declarados antes de la aplicación', () => {
+  const app = parseZafiroWebScript(`modulo saludos {
+  funcion hola(nombre) = "Hola " + nombre
+}
+aplicacion "Módulos" {
+  usar saludos
+  variable usuario: texto = "Ada"
+  titulo {{ hola(usuario) }}
+  descripcion "Módulo local"
+  tema claro
+  boton "Continuar" {
+    permiso ubicacion al_pulsar
+    mostrar coordenadas
+  }
+}`);
+  assert.equal(app.title, 'Hola Ada');
+  assert.deepEqual(app.imports, ['saludos']);
+  assert.throws(() => parseZafiroWebScript(`modulo malo {\n instruccion\n}\naplicacion "A" {}`), /solo puede declarar/);
+});
+
+test('rechaza ciclos no acotados y reporta las funciones estándar ausentes', () => {
+  const source = `aplicacion "Ciclo" {\n variable total = 0\n repetir i desde 1 hasta 1000 entonces variable total = total + i\n titulo "A"\n descripcion "B"\n tema oscuro\n boton "Compartir" {\n permiso ubicacion al_pulsar\n mostrar coordenadas\n }\n}`;
+  assert.throws(() => parseZafiroWebScript(source), /máximo de 101 iteraciones/);
+  const withNumbers = `aplicacion "Números" {\n usar numeros\n variable n = maximo(2, 9)\n titulo {{ n }}\n descripcion "Biblioteca estándar"\n tema oscuro\n boton "Compartir" {\n permiso ubicacion al_pulsar\n mostrar coordenadas\n }\n}`;
+  assert.equal(parseZafiroWebScript(withNumbers).title, '9');
+});
+
 test('genera HTML escapado sin eval y solicita ubicación al pulsar', () => {
   const html = compileZafiroWebScript(valid);
   assert.match(html, /Hola &lt;Zafiro&gt;/);
@@ -79,4 +132,15 @@ test('rechaza contenido extra y escapa cadenas contra HTML', () => {
   const html = compileZafiroWebScript(hostile);
   assert.match(html, /&lt;img src=x onerror=alert\(1\)&gt;/);
   assert.doesNotMatch(html, /<img src=x/);
+});
+
+test('genera archivos PWA enlazados y un service worker con caché offline', () => {
+  const assets = createZafiroPwaAssets(valid);
+  const html = compileZafiroWebScript(valid);
+  assert.match(html, /rel="manifest" href="manifest.webmanifest"/);
+  assert.match(html, /register\('\.\/sw\.js'/);
+  assert.match(assets.manifest, /"display": "standalone"/);
+  assert.match(assets.icon, /<svg/);
+  assert.match(assets.serviceWorker, /caches\.open/);
+  assert.match(assets.serviceWorker, /zafiro-app\.html/);
 });

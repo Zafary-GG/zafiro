@@ -1,9 +1,11 @@
 {
   "name": "zafiro-webscript",
   "displayName": "Zafiro WebScript",
-  "description": "Resaltado de sintaxis para el lenguaje Zafiro WebScript",
-  "version": "0.1.0",
+  "description": "Resaltado, sugerencias y diagnósticos para Zafiro WebScript",
+  "version": "0.2.0",
   "publisher": "zafiro",
+  "main": "./extension.js",
+  "activationEvents": ["onLanguage:zafiro"],
   "engines": { "vscode": "^1.85.0" },
   "categories": ["Programming Languages"],
   "contributes": {

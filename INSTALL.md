@@ -2,9 +2,9 @@
 
 ## Apps web con Zafiro WebScript
 
-Abre [`site/language-studio.html`](site/language-studio.html) en un navegador para escribir WebScript, revisar su vista previa y descargar un HTML independiente. El archivo [`examples/ubicacion_web.zafiro`](examples/ubicacion_web.zafiro) muestra variables, aritmética, funciones de un parámetro y condiciones. El intérprete valida las expresiones admitidas y no ejecuta código arbitrario del usuario. Hay una extensión básica para VS Code en [`editors/vscode`](editors/vscode).
+Abre [`site/language-studio.html`](site/language-studio.html) en un navegador para escribir WebScript, revisar su vista previa y descargar HTML y los archivos auxiliares de la PWA. El archivo [`examples/ubicacion_web.zafiro`](examples/ubicacion_web.zafiro) muestra módulos locales, tipos básicos, variables, aritmética, funciones, condiciones y un ciclo acotado. El intérprete valida las expresiones admitidas y no ejecuta código arbitrario del usuario. La extensión para VS Code en [`editors/vscode`](editors/vscode) ofrece resaltado, diagnósticos sintácticos y autocompletado.
 
-Para permitir ubicación, publica la app en HTTPS (localhost funciona durante desarrollo). El navegador solicita el permiso después de que el usuario pulse el botón. Solo consulta la ubicación del dispositivo que está usando la página, y el ejemplo presenta las coordenadas en el propio dispositivo sin enviarlas al servidor. No permite localizar otro teléfono a distancia. WebScript 0.2 es un lenguaje de dominio web temprano; todavía carece de ciclos, módulos, tipos estáticos, almacenamiento, autocompletado y compilación a apps nativas.
+Para instalarla como PWA, descarga `zafiro-app.html`, `manifest.webmanifest`, `icon.svg` y `sw.js` y publícalos juntos bajo HTTPS. El service worker guarda en caché la app y los recursos indicados. Esta salida es una app web instalable, no un APK o IPA nativo. Para permitir ubicación, publica la app en HTTPS (localhost funciona durante desarrollo); el navegador solicita el permiso al tocar el botón. Solo consulta la ubicación del dispositivo que usa la página y no la envía al servidor.
 
 Zafiro es una librería C++17. El núcleo solo necesita sus cabeceras; los adaptadores son opcionales.
 

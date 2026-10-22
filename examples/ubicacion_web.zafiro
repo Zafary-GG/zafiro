@@ -1,12 +1,21 @@
+modulo bienvenida {
+  funcion saludo(persona) = "Una idea de " + persona
+}
+
 aplicacion "Mi app" {
+  usar bienvenida
+  usar texto
+  usar numeros
   # Variables, expresiones y una funcion reutilizable.
   variable marca = "Zafiro"
   variable version = 1 + 1
-  funcion bienvenida(persona) = "Una idea de " + persona
-  titulo {{ bienvenida(marca) }}
+  tipo Contador = numero
+  variable intentos: Contador = 0
+  titulo {{ saludo(marca) }}
   descripcion "Una pequeña aplicación web hecha con Zafiro."
   tema oscuro
-  si version >= 2 entonces titulo "WebScript {{ version }} · {{ marca }}"
+  repetir i desde 1 hasta 3 entonces variable intentos = intentos + 1
+  si version >= 2 entonces titulo "WebScript {{ version }} · {{ mayusculas(marca) }}"
   boton "Compartir mi ubicación" {
     permiso ubicacion al_pulsar
     mostrar coordenadas

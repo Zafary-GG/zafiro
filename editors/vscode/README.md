@@ -1,6 +1,6 @@
 # Zafiro WebScript for Visual Studio Code
 
-Esta extensión inicial agrega resaltado de sintaxis y edición de bloques `.zafiro`.
+Esta extensión inicial agrega resaltado, sugerencias de código y diagnósticos sintácticos para bloques `.zafiro`.
 
 ## Probar localmente
 
@@ -16,4 +16,4 @@ cd editors/vscode
 vsce package
 ```
 
-El resaltado es básico; esta versión todavía no incluye autocompletado, diagnósticos ni un servidor Language Server Protocol.
+El servidor de lenguaje actual vive en la extensión de VS Code y ofrece diagnósticos y sugerencias sencillas. Todavía no implementa el protocolo LSP, diagnósticos semánticos completos ni navegación de símbolos.
