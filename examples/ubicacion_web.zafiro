@@ -1,7 +1,12 @@
 aplicacion "Mi app" {
-  titulo "Una idea en marcha"
+  # Variables, expresiones y una funcion reutilizable.
+  variable marca = "Zafiro"
+  variable version = 1 + 1
+  funcion bienvenida(persona) = "Una idea de " + persona
+  titulo {{ bienvenida(marca) }}
   descripcion "Una pequeña aplicación web hecha con Zafiro."
   tema oscuro
+  si version >= 2 entonces titulo "WebScript {{ version }} · {{ marca }}"
   boton "Compartir mi ubicación" {
     permiso ubicacion al_pulsar
     mostrar coordenadas

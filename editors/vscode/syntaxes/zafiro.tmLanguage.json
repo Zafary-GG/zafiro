@@ -1,0 +1,19 @@
+{
+  "scopeName": "source.zafiro",
+  "patterns": [
+    { "include": "#comments" },
+    { "include": "#strings" },
+    { "include": "#keywords" },
+    { "include": "#numbers" },
+    { "include": "#operators" },
+    { "include": "#variables" }
+  ],
+  "repository": {
+    "comments": { "patterns": [{ "name": "comment.line.number-sign.zafiro", "match": "#.*$" }] },
+    "strings": { "name": "string.quoted.double.zafiro", "begin": "\"", "end": "\"", "patterns": [{ "name": "constant.character.escape.zafiro", "match": "\\\\." }] },
+    "keywords": { "patterns": [{ "name": "keyword.control.zafiro", "match": "\\b(?:aplicacion|titulo|descripcion|tema|boton|permiso|mostrar|al_pulsar|coordenadas|variable|funcion|si|entonces|claro|oscuro)\\b" }] },
+    "numbers": { "name": "constant.numeric.zafiro", "match": "\\b\\d+(?:\\.\\d+)?\\b" },
+    "operators": { "name": "keyword.operator.zafiro", "match": "==|!=|<=|>=|[+*/<>-]|=" },
+    "variables": { "name": "variable.other.zafiro", "match": "\\b[A-Za-z_][A-Za-z0-9_]*\\b" }
+  }
+}

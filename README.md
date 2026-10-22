@@ -8,9 +8,11 @@ La guía detallada está en [INSTALL.md](INSTALL.md). El proyecto incluye licenc
 
 ## Zafiro WebScript: crea apps web
 
-El primer prototipo del lenguaje propio de Zafiro está en [`site/language-studio.html`](site/language-studio.html). El editor muestra una vista previa y compila un programa `.zafiro` a un archivo HTML independiente. El ejemplo de ubicación está en [`examples/ubicacion_web.zafiro`](examples/ubicacion_web.zafiro).
+El lenguaje propio de Zafiro está en [`site/language-studio.html`](site/language-studio.html). El editor muestra una vista previa y compila un programa `.zafiro` a un archivo HTML independiente. El ejemplo de ubicación está en [`examples/ubicacion_web.zafiro`](examples/ubicacion_web.zafiro).
 
-WebScript 0.1 es declarativo y enfocado en pantallas web; todavía no es un lenguaje avanzado de propósito general. Actualmente declara nombre, título, descripción, tema y un botón que solicita ubicación bajo demanda. La Geolocation API requiere un contexto seguro como HTTPS o localhost; el permiso se pide cuando la persona toca el botón. Solo se puede consultar el dispositivo que usa la página y sus coordenadas se muestran localmente. No localiza teléfonos por número ni dispositivos ajenos, y el ejemplo no envía la ubicación a un servidor.
+WebScript 0.2 combina instrucciones declarativas de interfaz con variables, números y cadenas, operaciones `+ - * /`, comparaciones, funciones de un parámetro y condiciones de una línea (`si ... entonces ...`). Las expresiones son interpretadas por un evaluador pequeño; no ejecuta JavaScript arbitrario. Todavía es un lenguaje de dominio para apps web, no un lenguaje de propósito general: no tiene ciclos, módulos, tipos estáticos, almacenamiento ni compilación móvil nativa. La extensión inicial de VS Code en `editors/vscode` da resaltado de sintaxis; aún no trae autocompletado ni diagnósticos.
+
+La app de ejemplo puede solicitar la ubicación del dispositivo que la está usando. La Geolocation API requiere HTTPS o localhost; el navegador pide el permiso cuando la persona toca el botón. Las coordenadas se muestran localmente: no localiza teléfonos por número o dispositivos ajenos y no las envía al servidor.
 
 Para ejecutar sus pruebas con Node.js 22 o posterior: `npm run test:webscript`.
 

@@ -1,9 +1,13 @@
 import { compileZafiroWebScript, parseZafiroWebScript } from './zafiro-webscript.js';
 
 const example = `aplicacion "Mi app" {
-  titulo "Una idea en marcha"
-  descripcion "Una pequeña aplicación web hecha con Zafiro."
+  variable nombre = "Zafiro"
+  variable visitas = 3 * 4
+  funcion saludar(persona) = "Hola, " + persona
+  titulo {{ saludar(nombre) }}
+  descripcion "Esta página se generó con Zafiro WebScript."
   tema oscuro
+  si visitas >= 10 entonces titulo "{{ saludar(nombre) }}: {{ visitas }} ideas"
   boton "Compartir mi ubicación" {
     permiso ubicacion al_pulsar
     mostrar coordenadas

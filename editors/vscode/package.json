@@ -1,0 +1,22 @@
+{
+  "name": "zafiro-webscript",
+  "displayName": "Zafiro WebScript",
+  "description": "Resaltado de sintaxis para el lenguaje Zafiro WebScript",
+  "version": "0.1.0",
+  "publisher": "zafiro",
+  "engines": { "vscode": "^1.85.0" },
+  "categories": ["Programming Languages"],
+  "contributes": {
+    "languages": [{
+      "id": "zafiro",
+      "aliases": ["Zafiro", "zafiro"],
+      "extensions": [".zafiro"],
+      "configuration": "./language-configuration.json"
+    }],
+    "grammars": [{
+      "language": "zafiro",
+      "scopeName": "source.zafiro",
+      "path": "./syntaxes/zafiro.tmLanguage.json"
+    }]
+  }
+}
