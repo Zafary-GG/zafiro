@@ -2,6 +2,8 @@ name: Release
 
 on:
   push:
+    branches:
+      - main
     tags:
       - 'v*'
   workflow_dispatch:
@@ -29,7 +31,7 @@ jobs:
       - name: Configure
         run: >-
           cmake -S . -B build -DCMAKE_BUILD_TYPE=Release
-          -DZAFIRO_WITH_PYTHON=ON -DZAFIRO_WITH_JAVASCRIPT=ON
+          -DZAFIRO_WITH_PYTHON=ON -DZAFIRO_WITH_JAVASCRIPT=ON -DZAFIRO_WITH_LUA=ON
 
       - name: Build
         run: cmake --build build --config Release --parallel
