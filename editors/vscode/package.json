@@ -8,7 +8,9 @@
   "activationEvents": ["onLanguage:zafiro"],
   "engines": { "vscode": "^1.85.0" },
   "categories": ["Programming Languages"],
+  "configuration": { "title": "Zafiro WebScript", "properties": { "zafiro.cliPath": { "type": "string", "default": "", "description": "Ruta a bin/zafiro.js si la CLI no está en la carpeta del repositorio." } } },
   "contributes": {
+    "commands": [{ "command": "zafiro.buildProject", "title": "Zafiro: Compilar proyecto WebScript", "category": "Zafiro" }],
     "languages": [{
       "id": "zafiro",
       "aliases": ["Zafiro", "zafiro"],

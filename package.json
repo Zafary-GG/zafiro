@@ -4,5 +4,6 @@
   "private": true,
   "description": "Prototipo del puente Zafiro para ejecutar JavaScript y Python desde Node.js",
   "type": "module",
-  "scripts": { "start": "node server.js", "test:webscript": "node --test tests/zafiro-webscript.test.js" }
+  "bin": { "zafiro": "bin/zafiro.js" },
+  "scripts": { "start": "node server.js", "test:webscript": "node --test tests/zafiro-webscript.test.js", "test:cli": "node --test tests/zafiro-cli.test.js", "test": "node --test tests/zafiro-webscript.test.js tests/zafiro-cli.test.js" }
 }

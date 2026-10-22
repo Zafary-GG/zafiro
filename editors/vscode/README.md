@@ -2,6 +2,8 @@
 
 Esta extensión inicial agrega resaltado, sugerencias de código y diagnósticos sintácticos para bloques `.zafiro`.
 
+En el proyecto del repositorio o en un proyecto creado con `zafiro create`, abre la carpeta y ejecuta **Zafiro: Compilar proyecto WebScript** desde la paleta de comandos. Para otros proyectos, configura `zafiro.cliPath` con una ruta absoluta a `bin/zafiro.js`.
+
 ## Probar localmente
 
 1. Abre la carpeta `editors/vscode` en VS Code.

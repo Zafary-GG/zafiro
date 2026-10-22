@@ -10,9 +10,20 @@ La guía detallada está en [INSTALL.md](INSTALL.md). El proyecto incluye licenc
 
 El lenguaje propio de Zafiro está en [`site/language-studio.html`](site/language-studio.html). El editor muestra una vista previa y compila un programa `.zafiro` a un archivo HTML independiente. El ejemplo de ubicación está en [`examples/ubicacion_web.zafiro`](examples/ubicacion_web.zafiro).
 
-WebScript 0.3 añade módulos declarados dentro del archivo (`modulo`/`usar`), alias y anotaciones de tipos básicos (`texto`, `numero`, `booleano`), ciclos `repetir` ascendentes limitados a 101 pasos y una biblioteca estándar explícita (`usar texto`, `usar numeros`). Incluye resaltado, diagnósticos sintácticos y sugerencias de código en la extensión de VS Code (`editors/vscode`). El editor puede descargar HTML, manifiesto PWA, icono SVG y service worker; juntos forman una app web instalable desde HTTPS y con caché básica offline.
+WebScript 0.4 añade una CLI para crear, validar y compilar proyectos. Admite módulos `.zfm` externos y locales (`usar "./modules/archivo.zfm"`), alias y anotaciones de tipos básicos (`texto`, `numero`, `booleano`), ciclos `repetir` ascendentes limitados a 101 pasos y una biblioteca estándar explícita (`usar texto`, `usar numeros`). La extensión de VS Code (`editors/vscode`) incluye resaltado, diagnósticos sintácticos, sugerencias y el comando **Zafiro: Compilar proyecto WebScript**. La CLI genera HTML, manifiesto PWA, icono SVG y service worker, listos para publicar juntos bajo HTTPS.
 
-WebScript sigue siendo un lenguaje de dominio temprano, no de propósito general. Los módulos se declaran en el mismo archivo, los tipos son anotaciones básicas y los ciclos solo acumulan una expresión. Aún faltan módulos distribuidos, tipos estáticos completos, una biblioteca extensible, validación semántica completa en VS Code, navegación entre pantallas y compilación a APK/IPA nativos.
+Desde la raíz del repositorio, crea y compila un proyecto sin instalar dependencias externas:
+
+```sh
+node bin/zafiro.js create MiApp
+cd MiApp
+npm run check
+npm run build
+```
+
+`zafiro.json` define el archivo de entrada y la carpeta de salida. El proyecto creado incluye la CLI y el compilador para seguir funcionando por su cuenta.
+
+WebScript sigue siendo un lenguaje de dominio temprano, no de propósito general. Los módulos importados son locales a la carpeta del proyecto; los tipos son anotaciones básicas y los ciclos solo acumulan una expresión. Aún faltan módulos publicados/gestor de paquetes, tipos estáticos completos, una biblioteca extensible, validación semántica completa en VS Code, navegación entre pantallas y compilación a APK/IPA nativos.
 
 La app de ejemplo puede solicitar la ubicación del dispositivo que la está usando. La Geolocation API requiere HTTPS o localhost; el navegador pide el permiso cuando la persona toca el botón. Las coordenadas se muestran localmente: no localiza teléfonos por número o dispositivos ajenos y no las envía al servidor.
 

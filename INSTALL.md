@@ -4,6 +4,17 @@
 
 Abre [`site/language-studio.html`](site/language-studio.html) en un navegador para escribir WebScript, revisar su vista previa y descargar HTML y los archivos auxiliares de la PWA. El archivo [`examples/ubicacion_web.zafiro`](examples/ubicacion_web.zafiro) muestra módulos locales, tipos básicos, variables, aritmética, funciones, condiciones y un ciclo acotado. El intérprete valida las expresiones admitidas y no ejecuta código arbitrario del usuario. La extensión para VS Code en [`editors/vscode`](editors/vscode) ofrece resaltado, diagnósticos sintácticos y autocompletado.
 
+La CLI requiere Node.js 22 o posterior y no necesita paquetes externos:
+
+```sh
+node bin/zafiro.js create MiApp
+cd MiApp
+npm run check
+npm run build
+```
+
+El proyecto de ejemplo importa módulos `.zfm` relativos a su carpeta. El compilador rechaza rutas externas y genera `dist/zafiro-app.html`, `dist/manifest.webmanifest`, `dist/icon.svg` y `dist/sw.js`. En VS Code abre la carpeta del proyecto y ejecuta **Zafiro: Compilar proyecto WebScript**.
+
 Para instalarla como PWA, descarga `zafiro-app.html`, `manifest.webmanifest`, `icon.svg` y `sw.js` y publícalos juntos bajo HTTPS. El service worker guarda en caché la app y los recursos indicados. Esta salida es una app web instalable, no un APK o IPA nativo. Para permitir ubicación, publica la app en HTTPS (localhost funciona durante desarrollo); el navegador solicita el permiso al tocar el botón. Solo consulta la ubicación del dispositivo que usa la página y no la envía al servidor.
 
 Zafiro es una librería C++17. El núcleo solo necesita sus cabeceras; los adaptadores son opcionales.
