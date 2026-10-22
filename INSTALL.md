@@ -1,5 +1,11 @@
 # Instalación de Zafiro 0.3.0
 
+## Apps web con Zafiro WebScript
+
+Abre [`site/language-studio.html`](site/language-studio.html) en un navegador para escribir WebScript, revisar su vista previa y descargar un HTML independiente. El archivo [`examples/ubicacion_web.zafiro`](examples/ubicacion_web.zafiro) muestra la sintaxis actual. El compilador valida un conjunto pequeño de instrucciones declarativas y no ejecuta código arbitrario del usuario.
+
+Para permitir ubicación, publica la app en HTTPS (localhost funciona durante desarrollo). El navegador solicita el permiso después de que el usuario pulse el botón. Solo consulta la ubicación del dispositivo que está usando la página, y el ejemplo presenta las coordenadas en el propio dispositivo sin enviarlas al servidor. No permite localizar otro teléfono a distancia. WebScript 0.1 es un prototipo web declarativo; todavía no ofrece variables, funciones, condiciones ni compilación a apps nativas.
+
 Zafiro es una librería C++17. El núcleo solo necesita sus cabeceras; los adaptadores son opcionales.
 
 ## Requisitos

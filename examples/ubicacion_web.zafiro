@@ -1,0 +1,9 @@
+aplicacion "Mi app" {
+  titulo "Una idea en marcha"
+  descripcion "Una pequeña aplicación web hecha con Zafiro."
+  tema oscuro
+  boton "Compartir mi ubicación" {
+    permiso ubicacion al_pulsar
+    mostrar coordenadas
+  }
+}

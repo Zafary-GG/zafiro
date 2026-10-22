@@ -6,6 +6,14 @@ Zafiro es una librería C++17 para compartir datos y encadenar Python, JavaScrip
 
 La guía detallada está en [INSTALL.md](INSTALL.md). El proyecto incluye licencia MIT.
 
+## Zafiro WebScript: crea apps web
+
+El primer prototipo del lenguaje propio de Zafiro está en [`site/language-studio.html`](site/language-studio.html). El editor muestra una vista previa y compila un programa `.zafiro` a un archivo HTML independiente. El ejemplo de ubicación está en [`examples/ubicacion_web.zafiro`](examples/ubicacion_web.zafiro).
+
+WebScript 0.1 es declarativo y enfocado en pantallas web; todavía no es un lenguaje avanzado de propósito general. Actualmente declara nombre, título, descripción, tema y un botón que solicita ubicación bajo demanda. La Geolocation API requiere un contexto seguro como HTTPS o localhost; el permiso se pide cuando la persona toca el botón. Solo se puede consultar el dispositivo que usa la página y sus coordenadas se muestran localmente. No localiza teléfonos por número ni dispositivos ajenos, y el ejemplo no envía la ubicación a un servidor.
+
+Para ejecutar sus pruebas con Node.js 22 o posterior: `npm run test:webscript`.
+
 ## Instalación para otros proyectos CMake
 
 Activa durante la instalación los adaptadores que quieres distribuir. El paquete instala las dependencias de QuickJS-NG que necesita el adaptador JavaScript y registra la dependencia de CPython para el adaptador Python.

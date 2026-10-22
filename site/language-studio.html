@@ -1,0 +1,19 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="color-scheme" content="dark"><meta name="theme-color" content="#10191d">
+  <title>WebScript Studio · Zafiro</title>
+  <link rel="stylesheet" href="/security.css"><link rel="stylesheet" href="/zafiro.css"><link rel="stylesheet" href="/mobile-app.css">
+  <script type="module" src="/language-studio.js"></script>
+</head>
+<body>
+  <header class="topbar wrap"><a class="brand" href="/zafiro.html"><span class="gem">◆</span> ZAFIRO</a><nav aria-label="Navegación principal"><a href="/zafiro.html">Biblioteca</a><a href="#editor">WebScript</a><a href="#privacidad">Privacidad</a></nav><span class="version">WEB · v0.1</span></header>
+  <main class="wrap studio-page">
+    <section class="studio-hero"><div><p class="eyebrow">EL PRIMER LENGUAJE PARA APPS WEB DE ZAFIRO</p><h1>Escribe una idea.<br><span>Construye una app.</span></h1><p>WebScript es un lenguaje declarativo pequeño: describe una pantalla y Zafiro genera un archivo HTML independiente que puedes abrir o publicar.</p></div><div class="studio-badge"><span>◆</span><b>Zafiro</b><small>WebScript 0.1</small><i>compilar → HTML</i></div></section>
+    <section id="editor" class="builder-grid"><div class="editor-panel"><div class="panel-heading"><div><p class="eyebrow">EDITOR</p><h2>Tu programa</h2></div><span>.zafiro</span></div><label class="sr-only" for="source">Código WebScript</label><textarea id="source" spellcheck="false" autocapitalize="off" autocomplete="off" aria-describedby="syntax-help"></textarea><p id="syntax-help" class="syntax-help">Usa las instrucciones mostradas. Guarda el código como <code>mi-app.zafiro</code> para editarlo después.</p><div class="editor-actions"><button class="button primary" id="preview-button" type="button">Crear vista previa <span aria-hidden="true">→</span></button><button class="button secondary" id="download-button" type="button">Descargar app .html ↓</button></div><p id="compiler-status" class="compiler-status" role="status" aria-live="polite">Ejemplo listo para compilar.</p></div>
+      <div class="preview-panel"><div class="panel-heading"><div><p class="eyebrow">VISTA PREVIA</p><h2>Así se verá</h2></div><span class="preview-live"><i></i> Local</span></div><div id="preview" class="preview-frame" aria-label="Vista previa de la aplicación"></div><p class="preview-note">Vista local. La ubicación real solo funciona desde HTTPS o localhost y después de autorizarla.</p></div></section>
+    <section id="privacidad" class="privacy-section"><div><p class="eyebrow">UBICACIÓN CON CONTROL DEL USUARIO</p><h2>El teléfono pregunta.<br><span>La persona decide.</span></h2></div><div><p>Una app generada no rastrea teléfonos por número ni localiza dispositivos ajenos. Solo puede solicitar la ubicación aproximada del dispositivo que la está usando, cuando alguien toca el botón y acepta el permiso del navegador.</p><p>WebScript 0.1 crea páginas web. Más adelante se pueden añadir variables, funciones, condiciones y herramientas para empaquetar apps móviles nativas; esta versión aún no es un lenguaje avanzado de propósito general.</p><a class="text-link" href="/zafiro.html">← Volver a Zafiro</a></div></section>
+  </main>
+  <footer class="footer wrap"><a class="brand" href="/zafiro.html"><span class="gem">◆</span> ZAFIRO</a><span>WebScript genera una app que pertenece a quien la crea.</span><a href="#editor">Volver al editor ↑</a></footer>
+</body></html>

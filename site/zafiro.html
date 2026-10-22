@@ -13,7 +13,7 @@
 <body>
   <header class="topbar wrap">
     <a class="brand" href="#inicio" aria-label="Zafiro, inicio"><span class="gem">◆</span> ZAFIRO</a>
-    <nav aria-label="Navegación principal"><a href="#como-funciona">Cómo funciona</a><a href="#ejemplo">Ejemplo</a><a href="#ciberseguridad">Ciberseguridad</a><a href="#descargas">Instalar</a><a href="/INSTALL.md">Guía</a></nav>
+    <nav aria-label="Navegación principal"><a href="#como-funciona">Cómo funciona</a><a href="#ejemplo">Ejemplo</a><a href="#ciberseguridad">Ciberseguridad</a><a href="/language-studio.html">Crear apps</a><a href="#descargas">Instalar</a><a href="/INSTALL.md">Guía</a></nav>
     <span class="version">C++17 · v0.3.0</span>
   </header>
 
@@ -69,6 +69,18 @@
     <section id="ciberseguridad" class="section security-section">
       <div class="security-copy"><p class="eyebrow">AUTOMATIZACIÓN DEFENSIVA</p><h2>También para tareas de <span>ciberseguridad.</span></h2><p>Zafiro puede coordinar scripts autorizados para revisar registros, correlacionar alertas y validar configuraciones usando el lenguaje que mejor se adapte a cada tarea.</p></div>
       <div class="security-details"><div><b>01</b><p><strong>Revisa registros</strong><br>Resume eventos de autenticación y destaca patrones para que un analista los investigue.</p></div><div><b>02</b><p><strong>Conecta herramientas</strong><br>Comparte resultados entre scripts Python, JavaScript, Lua y tu aplicación C++.</p></div><div><b>03</b><p><strong>Valida configuraciones</strong><br>Automatiza comprobaciones defensivas sobre datos y sistemas que tengas permiso de revisar.</p></div><div class="security-note"><span class="note-mark">!</span><p>Zafiro es el puente de ejecución; no incluye un IDS ni un escáner. Sus adaptadores ejecutan código en el mismo proceso y no son un sandbox. Usa solo código confiable y análisis autorizados.</p></div><a class="text-link" href="https://github.com/Zafary-GG/zafiro/tree/main/examples/security_log_review.cpp">Ver ejemplo de revisión de logs →</a></div>
+    </section>
+
+    <section class="section app-builder-promo">
+      <div><p class="eyebrow">ZAFIRO WEBSCRIPT · PRIMERA VERSIÓN</p><h2>Crea una app web con <span>tu propio lenguaje.</span></h2><p>Escribe una descripción en WebScript, mira la vista previa y descarga un HTML listo para abrir. También puedes crear una app que pida ubicación al teléfono que la está usando, solo al pulsar un botón y con permiso.</p><a class="button primary" href="/language-studio.html">Abrir WebScript Studio <span aria-hidden="true">→</span></a></div>
+      <div class="app-builder-code"><span>mi-app.zafiro</span><pre><code>aplicacion "Mi app" {
+  titulo "Una idea en marcha"
+  tema oscuro
+  boton "Compartir ubicación" {
+    permiso ubicacion al_pulsar
+    mostrar coordenadas
+  }
+}</code></pre></div>
     </section>
 
     <section id="descargas" class="section start-section">
