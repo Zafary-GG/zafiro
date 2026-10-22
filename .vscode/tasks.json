@@ -1,0 +1,26 @@
+{
+  "version": "2.0.0",
+  "tasks": [
+    {
+      "label": "Zafiro: configurar",
+      "type": "shell",
+      "command": "cmake --preset default",
+      "group": "build",
+      "problemMatcher": []
+    },
+    {
+      "label": "Zafiro: compilar",
+      "type": "shell",
+      "command": "cmake --build --preset default",
+      "group": { "kind": "build", "isDefault": true },
+      "problemMatcher": "$gcc"
+    },
+    {
+      "label": "Zafiro: pruebas",
+      "type": "shell",
+      "command": "ctest --preset default",
+      "group": "test",
+      "problemMatcher": []
+    }
+  ]
+}

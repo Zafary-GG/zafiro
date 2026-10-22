@@ -1,0 +1,8 @@
+{
+  "name": "zafiro",
+  "version": "0.3.0",
+  "description": "Libreria C++17 para integrar y coordinar adaptadores de lenguajes",
+  "homepage": "https://github.com/Zafary-GG/zafiro",
+  "license": "MIT",
+  "dependencies": ["vcpkg-cmake", "vcpkg-cmake-config"]
+}

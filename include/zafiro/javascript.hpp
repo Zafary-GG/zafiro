@@ -115,10 +115,18 @@ public:
     JavaScriptEngine& operator=(const JavaScriptEngine&) = delete;
 
     std::string run(const std::string& code) {
+        return run(code, nullptr);
+    }
+
+    std::string run(const std::string& code, SharedContext* shared) {
         std::lock_guard<std::mutex> lock(mutex_);
         state_.output.clear();
         state_.timed_out = false;
         state_.deadline = std::chrono::steady_clock::now() + std::chrono::seconds(2);
+
+        if (shared && sync_shared(*shared) < 0) {
+            throw std::runtime_error("Zafiro JavaScript: no se pudo actualizar zafiro: " + js_exception_message(context_));
+        }
 
         JSValue result = JS_Eval(context_, code.data(), code.size(), "<zafiro>",
                                  JS_EVAL_TYPE_GLOBAL);
@@ -131,10 +139,94 @@ public:
             throw std::runtime_error("Zafiro JavaScript: " + message +
                 (state_.output.empty() ? "" : "\nSalida antes del error:\n" + state_.output));
         }
+        if (shared && read_shared(*shared) < 0) {
+            throw std::runtime_error("Zafiro JavaScript: los valores de zafiro deben ser JSON compatibles: " + js_exception_message(context_));
+        }
         return state_.output;
     }
 
 private:
+    static JSValue value_to_js(JSContext* context, const Value& value) {
+        if (value.is_null()) return JS_NULL;
+        if (value.is_bool()) return JS_NewBool(context, value.as_bool());
+        if (value.is_number()) return JS_NewFloat64(context, value.as_number());
+        if (value.is_string()) return JS_NewStringLen(context, value.as_string().data(), value.as_string().size());
+        if (value.is_array()) {
+            JSValue array = JS_NewArray(context);
+            for (std::uint32_t i = 0; i < value.as_array().size(); ++i) {
+                JSValue child = value_to_js(context, value.as_array()[i]);
+                if (JS_IsException(child) || JS_SetPropertyUint32(context, array, i, child) < 0) { JS_FreeValue(context, array); return JS_EXCEPTION; }
+            }
+            return array;
+        }
+        JSValue object = JS_NewObject(context);
+        for (const auto& item : value.as_object()) {
+            JSValue child = value_to_js(context, item.second);
+            if (JS_IsException(child) || JS_SetPropertyStr(context, object, item.first.c_str(), child) < 0) { JS_FreeValue(context, object); return JS_EXCEPTION; }
+        }
+        return object;
+    }
+
+    static std::optional<Value> value_from_js(JSContext* context, JSValueConst value, unsigned depth = 0) {
+        if (depth > 32) return std::nullopt;
+        if (JS_IsNull(value) || JS_IsUndefined(value)) return Value{};
+        if (JS_IsBool(value)) return Value(JS_ToBool(context, value) != 0);
+        if (JS_IsNumber(value)) { double n = 0; if (JS_ToFloat64(context, &n, value) < 0 || !std::isfinite(n)) return std::nullopt; return Value(n); }
+        if (JS_IsString(value)) return Value(js_value_to_string(context, value));
+        if (JS_IsArray(value)) {
+            JSValue length = JS_GetPropertyStr(context, value, "length"); std::uint32_t count = 0;
+            const int rc = JS_ToUint32(context, &count, length); JS_FreeValue(context, length); if (rc < 0 || count > 100000) return std::nullopt;
+            Value::Array array;
+            for (std::uint32_t i = 0; i < count; ++i) { JSValue item = JS_GetPropertyUint32(context, value, i); auto v = value_from_js(context, item, depth + 1); JS_FreeValue(context, item); if (!v) return std::nullopt; array.push_back(std::move(*v)); }
+            return Value(std::move(array));
+        }
+        if (JS_IsObject(value)) {
+            JSPropertyEnum* properties = nullptr; std::uint32_t count = 0;
+            if (JS_GetOwnPropertyNames(context, &properties, &count, value, JS_GPN_STRING_MASK | JS_GPN_ENUM_ONLY) < 0) return std::nullopt;
+            Value::Object object;
+            for (std::uint32_t i = 0; i < count; ++i) {
+                const char* key = JS_AtomToCString(context, properties[i].atom);
+                JSValue item = JS_GetProperty(context, value, properties[i].atom);
+                auto v = value_from_js(context, item, depth + 1);
+                if (key && v) object.emplace(key, std::move(*v));
+                if (key) JS_FreeCString(context, key);
+                JS_FreeValue(context, item); JS_FreeAtom(context, properties[i].atom);
+                if (!v) { for (++i; i < count; ++i) JS_FreeAtom(context, properties[i].atom); js_free(context, properties); return std::nullopt; }
+            }
+            js_free(context, properties); return Value(std::move(object));
+        }
+        return std::nullopt;
+    }
+
+    int sync_shared(const SharedContext& shared) {
+        JSValue global = JS_GetGlobalObject(context_);
+        JSValue object = JS_GetPropertyStr(context_, global, "zafiro");
+        if (!JS_IsObject(object)) { JS_FreeValue(context_, object); object = JS_NewObject(context_); }
+        int rc = 0;
+        for (const auto& item : shared.snapshot()) {
+            JSValue child = value_to_js(context_, item.second);
+            if (JS_IsException(child) || JS_SetPropertyStr(context_, object, item.first.c_str(), child) < 0) { rc = -1; break; }
+        }
+        if (rc == 0) rc = JS_SetPropertyStr(context_, global, "zafiro", object);
+        else JS_FreeValue(context_, object);
+        JS_FreeValue(context_, global); return rc;
+    }
+
+    int read_shared(SharedContext& shared) {
+        JSValue global = JS_GetGlobalObject(context_); JSValue object = JS_GetPropertyStr(context_, global, "zafiro"); JS_FreeValue(context_, global);
+        if (!JS_IsObject(object)) { JS_FreeValue(context_, object); return -1; }
+        JSPropertyEnum* properties = nullptr; std::uint32_t count = 0;
+        if (JS_GetOwnPropertyNames(context_, &properties, &count, object, JS_GPN_STRING_MASK | JS_GPN_ENUM_ONLY) < 0) { JS_FreeValue(context_, object); return -1; }
+        bool ok = true;
+        for (std::uint32_t i = 0; i < count; ++i) {
+            const char* key = JS_AtomToCString(context_, properties[i].atom); JSValue item = JS_GetProperty(context_, object, properties[i].atom);
+            auto v = value_from_js(context_, item);
+            if (key && v) shared.set(key, std::move(*v)); else ok = false;
+            if (key) JS_FreeCString(context_, key); JS_FreeValue(context_, item); JS_FreeAtom(context_, properties[i].atom);
+        }
+        js_free(context_, properties); JS_FreeValue(context_, object); return ok ? 0 : -1;
+    }
+
     int install_helpers() {
         JSValue global = JS_GetGlobalObject(context_);
         JSValue print = JS_NewCFunction(context_, js_print, "print", 1);
@@ -186,6 +278,9 @@ public:
     std::string run(const std::string& code) const {
         return engine_->run(code);
     }
+    std::string run(const std::string& code, SharedContext& context) const {
+        return engine_->run(code, &context);
+    }
 
 private:
     std::shared_ptr<detail::JavaScriptEngine> engine_;
@@ -193,8 +288,8 @@ private:
 
 inline bool register_javascript(LanguageHub& hub) {
     auto runtime = std::make_shared<JavaScriptRuntime>();
-    return hub.register_language("javascript", [runtime](const std::string& code) {
-        return runtime->run(code);
+    return hub.register_language("javascript", [runtime](const std::string& code, SharedContext& context) {
+        return runtime->run(code, context);
     });
 }
 

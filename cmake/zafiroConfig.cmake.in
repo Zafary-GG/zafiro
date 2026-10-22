@@ -13,5 +13,7 @@ else()
     set(zafiro_javascript_FOUND FALSE)
 endif()
 
+set(zafiro_lua_FOUND @ZAFIRO_CONFIG_LUA@)
+
 include("${CMAKE_CURRENT_LIST_DIR}/zafiroTargets.cmake")
 check_required_components(zafiro)

@@ -1,13 +1,15 @@
-# Instalación de Zafiro 0.2.1
+# Instalación de Zafiro 0.3.0
 
 Zafiro es una librería C++17. El núcleo solo necesita sus cabeceras; los adaptadores son opcionales.
 
 ## Requisitos
 
-- CMake 3.18 o posterior.
+- CMake 3.24 o posterior.
 - Un compilador compatible con C++17: GCC, Clang o MSVC.
 - Para JavaScript: conexión a Internet durante la primera configuración para descargar QuickJS-NG v0.17.0.
 - Para Python: CPython 3.9 o posterior instalado con sus archivos de desarrollo y embedding.
+- Para los presets de VS Code/Visual Studio: CMake 3.24 o posterior y Ninja.
+- Lua 5.4.9 y QuickJS-NG se descargan al habilitar esos adaptadores.
 
 ## Descargar el código
 
@@ -39,7 +41,7 @@ cmake --install build --config Release
 
 El paquete instala cabeceras y targets CMake `zafiro::zafiro`, `zafiro::python` y `zafiro::javascript`. Cuando JavaScript está activado, también instala la biblioteca y cabeceras QuickJS-NG requeridas por el adaptador.
 
-Para generar archivos versionados después de compilar, ejecuta `cmake --build build --target package`. CPack genera `zafiro-0.2.1-<sistema>-<arquitectura>.zip` y `.tar.gz`; ambos contienen los componentes seleccionados, cabeceras, configuración CMake y documentación. Compila en cada sistema de destino para que el paquete incluya la biblioteca QuickJS adecuada a esa plataforma.
+Para generar archivos versionados después de compilar, ejecuta `cmake --build build --target package`. CPack genera `zafiro-0.3.0-<sistema>-<arquitectura>.zip` y `.tar.gz`; ambos contienen los componentes seleccionados, cabeceras, configuración CMake y documentación. Compila en cada sistema de destino para que el paquete incluya las bibliotecas nativas correspondientes.
 
 El proyecto [examples/installed-consumer](examples/installed-consumer) sirve para comprobar la instalación desde un consumidor independiente. Configúralo con `-DCMAKE_PREFIX_PATH=/ruta/a/zafiro` y, si no instalaste algún runtime, desactiva su opción, por ejemplo `-DZAFIRO_CONSUMER_PYTHON=OFF`.
 
@@ -53,12 +55,20 @@ cmake --build consumer-build --config Release
 
 Las opciones `ZAFIRO_CONSUMER_PYTHON` y `ZAFIRO_CONSUMER_JAVASCRIPT` vienen activadas por defecto; ponlas en `OFF` para omitir un runtime.
 
+## VS Code, Visual Studio, Conan y vcpkg
+
+Abre la carpeta del repositorio en VS Code o Visual Studio; ambos reconocen los presets CMake incluidos. En VS Code acepta las extensiones recomendadas y selecciona `default` o `all-adapters`. Compilación base: `cmake --preset default`, `cmake --build --preset default`, `ctest --preset default`.
+
+La receta `conanfile.py` usa Conan 2 (`conan create .`) y acepta `with_python`, `with_javascript` y `with_lua`. El puerto overlay de vcpkg está en `ports/zafiro`; desde la raíz del repositorio puedes instalarlo con `vcpkg install zafiro --overlay-ports=ports`. El puerto instala el núcleo C++; activa los adaptadores opcionales con CMake para compilar sus runtimes.
+
+El adaptador Lua puede instalarse como componente `lua` y enlazarse como `zafiro::lua`.
+
 ## Usar desde otro proyecto CMake
 
 Indica el prefijo de instalación al configurar el proyecto consumidor:
 
 ```cmake
-find_package(zafiro 0.2 CONFIG REQUIRED COMPONENTS python javascript)
+find_package(zafiro 0.3 CONFIG REQUIRED COMPONENTS python javascript)
 
 add_executable(mi_app main.cpp)
 target_link_libraries(mi_app PRIVATE

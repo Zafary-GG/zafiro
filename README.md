@@ -1,8 +1,8 @@
 # Zafiro
 
-Versión actual: **0.2.1**.
+Versión actual: **0.3.0**.
 
-Zafiro es una librería de utilidades C++17 con un puente opcional para integrar runtimes de otros lenguajes dentro de una aplicación C++.
+Zafiro es una librería C++17 para compartir datos y encadenar Python, JavaScript y Lua dentro de una aplicación C++. La biblioteca base no requiere dependencias; los adaptadores se activan por separado.
 
 La guía detallada está en [INSTALL.md](INSTALL.md). El proyecto incluye licencia MIT.
 
@@ -20,7 +20,7 @@ cmake --install build --config Release
 En el proyecto consumidor, pasa el prefijo al configurar CMake y pide solo los componentes instalados:
 
 ```cmake
-find_package(zafiro 0.2 CONFIG REQUIRED COMPONENTS python javascript)
+find_package(zafiro 0.3 CONFIG REQUIRED COMPONENTS python javascript)
 target_link_libraries(mi_app PRIVATE zafiro::zafiro zafiro::python zafiro::javascript)
 ```
 
@@ -33,12 +33,50 @@ Para generar paquetes versionados ZIP y TGZ, compila Zafiro con los adaptadores 
 - Texto: `trim`, `to_upper`, `to_lower`, `split` y `starts_with`.
 - Números: `clamp`, `map_range` y `approximately_equal`.
 - `LanguageHub`: registra adaptadores de lenguajes y despacha fragmentos de código.
+- `SharedContext` y `Value`: comparten valores JSON compatibles entre C++ y los adaptadores.
+- `run_pipeline`: ejecuta pasos de distintos lenguajes en secuencia usando los mismos datos.
 - Adaptador CPython: ejecuta código Python, captura `stdout`/`stderr` y devuelve el traceback si hay un error.
 - Adaptador JavaScript: integra QuickJS-NG, captura `print` y `console`, conserva el contexto entre llamadas y propaga errores.
+- Adaptador Lua 5.4: integra Lua, captura salida, propaga errores y comparte datos.
+
+## Compartir valores y encadenar lenguajes
+
+Los scripts acceden al contexto como `zafiro` (diccionario en Python, objeto en JavaScript y tabla en Lua). El contexto de C++ permite precargar y recuperar datos:
+
+```cpp
+hub.context().set("numero", 20);
+hub.run_pipeline({
+    {"python", "zafiro['numero'] += 1"},
+    {"javascript", "zafiro.numero *= 2; console.log(zafiro.numero);"}
+});
+std::cout << hub.context().get("numero")->as_number(); // 42
+```
+
+Los valores compartidos admiten nulo, booleano, número finito, texto, listas y objetos con claves de texto. Evita valores cíclicos; los adaptadores solo importan valores JSON compatibles.
+
+Para los tres lenguajes compila con `-DZAFIRO_WITH_PYTHON=ON -DZAFIRO_WITH_JAVASCRIPT=ON -DZAFIRO_WITH_LUA=ON`. Lua 5.4.9 se descarga de lua.org y QuickJS-NG de su repositorio oficial durante la configuración.
+
+## VS Code y Visual Studio
+
+Abre la carpeta del repositorio. VS Code recomienda C/C++ y CMake Tools. En la vista CMake selecciona el preset **Zafiro: C++ base** para compilar la biblioteca; el preset **Zafiro: Python + JavaScript + Lua** habilita todos los adaptadores y requiere Python con archivos de desarrollo y conexión para descargar las dependencias.
+
+También puedes ejecutar desde la terminal integrada:
+
+```sh
+cmake --preset default
+cmake --build --preset default
+ctest --preset default
+```
+
+Visual Studio abre la carpeta mediante **Archivo > Abrir > Carpeta** y detecta `CMakeLists.txt` y `CMakePresets.json`. También puedes escoger la configuración `all-adapters` desde la barra de configuración de CMake.
+
+## Conan y vcpkg
+
+La receta Conan está en `conanfile.py`; compila la distribución de Zafiro y ofrece opciones `with_python`, `with_javascript` y `with_lua`. El puerto overlay de vcpkg está en `ports/zafiro`; instálalo desde la raíz con `vcpkg install zafiro --overlay-ports=ports`. El puerto instala el núcleo; los adaptadores se habilitan desde CMake y requieren los paquetes de desarrollo de sus runtimes.
 
 ## Adaptador real de Python
 
-El adaptador usa la API de embedding oficial de CPython. Python es opcional: el objetivo normal `zafiro::zafiro` sigue siendo una librería de cabecera sin dependencias externas. Para habilitar el adaptador, instala Python con sus archivos de desarrollo y CMake 3.18 o posterior.
+El adaptador usa la API de embedding oficial de CPython. Python es opcional: el objetivo normal `zafiro::zafiro` sigue siendo una librería de cabecera sin dependencias externas. Para habilitar el adaptador, instala Python con sus archivos de desarrollo y CMake 3.24 o posterior.
 
 ```sh
 cmake -S . -B build -DZAFIRO_WITH_PYTHON=ON

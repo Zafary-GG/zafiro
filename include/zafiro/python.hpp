@@ -163,12 +163,28 @@ public:
     }
 
     std::string run(const std::string& code) {
+        return run(code, nullptr);
+    }
+
+    std::string run(const std::string& code, SharedContext* shared) {
         if (code.find('\0') != std::string::npos) {
             throw std::invalid_argument("Zafiro Python: el código contiene un byte nulo.");
         }
 
         std::lock_guard<std::mutex> lock(execution_mutex_);
         GilGuard gil;
+
+        PyObjectRef shared_dict(PyDict_New());
+        if (!shared_dict.get()) throw_python_error("Zafiro: no se pudo crear el contexto compartido");
+        if (shared) {
+            for (const auto& item : shared->snapshot()) {
+                PyObjectRef value(to_python(item.second));
+                if (!value.get() || PyDict_SetItemString(shared_dict.get(), item.first.c_str(), value.get()) != 0)
+                    throw_python_error("Zafiro: no se pudo copiar un valor al contexto Python");
+            }
+        }
+        if (PyDict_SetItemString(globals_, "zafiro", shared_dict.get()) != 0)
+            throw_python_error("Zafiro: no se pudo registrar zafiro en Python");
 
         PyObjectRef sys(PyImport_ImportModule("sys"));
         PyObjectRef io(PyImport_ImportModule("io"));
@@ -199,6 +215,18 @@ public:
 
         // Preserve the active Python exception before calls used to read stdout/stderr.
         const std::string exception = failed ? format_python_exception() : std::string{};
+        if (!failed && shared) {
+            PyObject* key = nullptr;
+            PyObject* value = nullptr;
+            Py_ssize_t position = 0;
+            while (PyDict_Next(shared_dict.get(), &position, &key, &value)) {
+                const std::string name = unicode_to_string(key);
+                if (!name.empty()) {
+                    auto converted = from_python(value);
+                    if (converted) shared->set(name, std::move(*converted));
+                }
+            }
+        }
         const std::string output = capture_value(captured_stdout.get());
         const std::string error_output = capture_value(captured_stderr.get());
         if (failed) {
@@ -214,6 +242,71 @@ public:
     PythonState& operator=(const PythonState&) = delete;
 
 private:
+    static PyObject* to_python(const Value& value) {
+        if (value.is_null()) { Py_INCREF(Py_None); return Py_None; }
+        if (value.is_bool()) return PyBool_FromLong(value.as_bool() ? 1 : 0);
+        if (value.is_number()) return PyFloat_FromDouble(value.as_number());
+        if (value.is_string()) return PyUnicode_FromStringAndSize(value.as_string().data(), static_cast<Py_ssize_t>(value.as_string().size()));
+        if (value.is_array()) {
+            PyObjectRef list(PyList_New(static_cast<Py_ssize_t>(value.as_array().size())));
+            if (!list.get()) return nullptr;
+            for (std::size_t i = 0; i < value.as_array().size(); ++i) {
+                PyObject* item = to_python(value.as_array()[i]);
+                if (!item) return nullptr;
+                PyList_SET_ITEM(list.get(), static_cast<Py_ssize_t>(i), item);
+            }
+            return list.release();
+        }
+        PyObjectRef dict(PyDict_New());
+        if (!dict.get()) return nullptr;
+        for (const auto& item : value.as_object()) {
+            PyObjectRef converted(to_python(item.second));
+            if (!converted.get() || PyDict_SetItemString(dict.get(), item.first.c_str(), converted.get()) != 0) return nullptr;
+        }
+        return dict.release();
+    }
+
+    static std::optional<Value> from_python(PyObject* value, unsigned depth = 0) {
+        if (depth > 32) return std::nullopt;
+        if (value == Py_None) return Value{};
+        if (PyBool_Check(value)) return Value(value == Py_True);
+        if (PyLong_Check(value)) {
+            const double number = PyLong_AsDouble(value);
+            if (PyErr_Occurred()) { PyErr_Clear(); return std::nullopt; }
+            return Value(number);
+        }
+        if (PyFloat_Check(value)) {
+            const double number = PyFloat_AsDouble(value);
+            if (!std::isfinite(number)) return std::nullopt;
+            return Value(number);
+        }
+        if (PyUnicode_Check(value)) return Value(unicode_to_string(value));
+        if (PyList_Check(value) || PyTuple_Check(value)) {
+            Value::Array result;
+            const Py_ssize_t size = PySequence_Size(value);
+            for (Py_ssize_t i = 0; i < size; ++i) {
+                PyObjectRef item(PySequence_GetItem(value, i));
+                auto converted = from_python(item.get(), depth + 1);
+                if (!converted) return std::nullopt;
+                result.push_back(std::move(*converted));
+            }
+            return Value(std::move(result));
+        }
+        if (PyDict_Check(value)) {
+            Value::Object result;
+            PyObject *key = nullptr, *item = nullptr;
+            Py_ssize_t position = 0;
+            while (PyDict_Next(value, &position, &key, &item)) {
+                if (!PyUnicode_Check(key)) return std::nullopt;
+                auto converted = from_python(item, depth + 1);
+                if (!converted) return std::nullopt;
+                result.emplace(unicode_to_string(key), std::move(*converted));
+            }
+            return Value(std::move(result));
+        }
+        return std::nullopt;
+    }
+
     [[noreturn]] static void throw_python_error(const char* context) {
         const std::string detail = format_python_exception();
         throw std::runtime_error(std::string(context) + ": " + detail);
@@ -237,12 +330,15 @@ public:
     std::string run(const std::string& code) const {
         return detail::python_state().run(code);
     }
+    std::string run(const std::string& code, SharedContext& context) const {
+        return detail::python_state().run(code, &context);
+    }
 };
 
 // Convenience function: the hub owns the callback and dispatches "python" snippets.
 inline bool register_python(LanguageHub& hub) {
-    return hub.register_language("python", [](const std::string& code) {
-        return PythonRuntime{}.run(code);
+    return hub.register_language("python", [](const std::string& code, SharedContext& context) {
+        return PythonRuntime{}.run(code, context);
     });
 }
 

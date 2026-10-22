@@ -11,7 +11,9 @@
 # Editor and operating system files
 .DS_Store
 Thumbs.db
-.vscode/
+.vscode/settings.json
+.vscode/launch.json
+.vscode/.browse.VC.db*
 .idea/
 
 # Local credentials and environment configuration

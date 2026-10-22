@@ -1,5 +1,5 @@
-cmake_minimum_required(VERSION 3.18)
-project(zafiro VERSION 0.2.1 LANGUAGES C CXX)
+cmake_minimum_required(VERSION 3.24)
+project(zafiro VERSION 0.3.0 LANGUAGES C CXX)
 
 include(CTest)
 include(GNUInstallDirs)
@@ -7,8 +7,8 @@ include(CMakePackageConfigHelpers)
 
 option(ZAFIRO_WITH_PYTHON "Enable the CPython embedding adapter" OFF)
 option(ZAFIRO_WITH_JAVASCRIPT "Enable the QuickJS-NG JavaScript adapter" OFF)
+option(ZAFIRO_WITH_LUA "Enable the Lua 5.4 adapter" OFF)
 option(ZAFIRO_BUILD_EXAMPLE "Build the basic example" ON)
-
 add_library(zafiro INTERFACE)
 add_library(zafiro::zafiro ALIAS zafiro)
 target_include_directories(zafiro INTERFACE
@@ -18,6 +18,47 @@ target_compile_features(zafiro INTERFACE cxx_std_17)
 
 set(ZAFIRO_CONFIG_PYTHON ${ZAFIRO_WITH_PYTHON})
 set(ZAFIRO_CONFIG_JAVASCRIPT ${ZAFIRO_WITH_JAVASCRIPT})
+set(ZAFIRO_CONFIG_LUA ${ZAFIRO_WITH_LUA})
+
+if(ZAFIRO_WITH_LUA)
+    include(FetchContent)
+    if(POLICY CMP0169)
+        cmake_policy(SET CMP0169 OLD)
+    endif()
+    FetchContent_Declare(lua54
+        URL https://www.lua.org/ftp/lua-5.4.9.tar.gz
+        URL_HASH SHA256=2335b6c582a52654f94612bf10d2f4672805d05329aa6568b1d8cd9e5c6fb8e6
+        DOWNLOAD_EXTRACT_TIMESTAMP TRUE)
+    FetchContent_GetProperties(lua54)
+    if(NOT lua54_POPULATED)
+        FetchContent_Populate(lua54)
+    endif()
+    file(GLOB LUA_SOURCES CONFIGURE_DEPENDS "${lua54_SOURCE_DIR}/src/*.c")
+    list(FILTER LUA_SOURCES EXCLUDE REGEX "/(lua|luac)\\.c$")
+    add_library(zafiro_lua_engine STATIC ${LUA_SOURCES})
+    target_include_directories(zafiro_lua_engine PUBLIC
+        $<BUILD_INTERFACE:${lua54_SOURCE_DIR}/src>
+        $<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}/zafiro/lua>)
+    if(NOT WIN32)
+        target_link_libraries(zafiro_lua_engine PUBLIC ${CMAKE_DL_LIBS} m)
+    endif()
+    add_library(zafiro_lua INTERFACE)
+    add_library(zafiro::lua ALIAS zafiro_lua)
+    set_target_properties(zafiro_lua PROPERTIES EXPORT_NAME lua)
+    target_link_libraries(zafiro_lua INTERFACE zafiro::zafiro zafiro_lua_engine)
+    install(TARGETS zafiro_lua_engine zafiro_lua EXPORT zafiroTargets
+        ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR}
+        LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
+        RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR})
+    install(DIRECTORY "${lua54_SOURCE_DIR}/src/" DESTINATION "${CMAKE_INSTALL_INCLUDEDIR}/zafiro/lua"
+        FILES_MATCHING PATTERN "*.h")
+endif()
+
+if(BUILD_TESTING)
+    add_executable(zafiro_context_tests tests/context_tests.cpp)
+    target_link_libraries(zafiro_context_tests PRIVATE zafiro::zafiro)
+    add_test(NAME zafiro.shared_context_pipeline COMMAND zafiro_context_tests)
+endif()
 
 if(ZAFIRO_WITH_PYTHON)
     find_package(Python3 3.9 COMPONENTS Development.Embed REQUIRED)
@@ -59,10 +100,32 @@ if(ZAFIRO_WITH_JAVASCRIPT)
     install(TARGETS zafiro_javascript EXPORT zafiroTargets)
 endif()
 
+if(ZAFIRO_WITH_PYTHON AND ZAFIRO_WITH_JAVASCRIPT)
+    add_executable(zafiro_multilanguage_example examples/multilanguage.cpp)
+    target_link_libraries(zafiro_multilanguage_example PRIVATE zafiro::python zafiro::javascript)
+endif()
+
+if(ZAFIRO_WITH_LUA)
+    set_target_properties(zafiro_lua_engine PROPERTIES EXPORT_NAME lua_engine)
+    option(ZAFIRO_BUILD_LUA_EXAMPLE "Build the Lua adapter example" ON)
+    if(ZAFIRO_BUILD_LUA_EXAMPLE)
+        add_executable(zafiro_lua_example examples/lua.cpp)
+        target_link_libraries(zafiro_lua_example PRIVATE zafiro::lua)
+    endif()
+    if(BUILD_TESTING)
+        add_executable(zafiro_lua_tests tests/lua_adapter_tests.cpp)
+        target_link_libraries(zafiro_lua_tests PRIVATE zafiro::lua)
+        add_test(NAME zafiro.lua_adapter COMMAND zafiro_lua_tests)
+    endif()
+endif()
+
 install(TARGETS zafiro EXPORT zafiroTargets)
 install(DIRECTORY include/ DESTINATION ${CMAKE_INSTALL_INCLUDEDIR})
 install(FILES README.md INSTALL.md LICENSE
     DESTINATION ${CMAKE_INSTALL_DATADIR}/doc/zafiro)
+if(ZAFIRO_WITH_LUA)
+    install(FILES "${lua54_SOURCE_DIR}/doc/readme.html" DESTINATION "${CMAKE_INSTALL_DATADIR}/licenses/zafiro" RENAME Lua-NOTICE.html)
+endif()
 install(EXPORT zafiroTargets
     FILE zafiroTargets.cmake
     NAMESPACE zafiro::

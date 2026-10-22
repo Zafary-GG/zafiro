@@ -7,6 +7,9 @@
 #if defined(ZAFIRO_CONSUMER_JAVASCRIPT)
 #include <zafiro/javascript.hpp>
 #endif
+#if defined(ZAFIRO_CONSUMER_LUA)
+#include <zafiro/lua.hpp>
+#endif
 
 int main() {
     zafiro::LanguageHub hub;
@@ -17,6 +20,10 @@ int main() {
 #if defined(ZAFIRO_CONSUMER_JAVASCRIPT)
     if (!zafiro::register_javascript(hub)) throw std::runtime_error("No se registró JavaScript");
     std::cout << hub.run("javascript", "console.log('JavaScript desde find_package')") << '\n';
+#endif
+#if defined(ZAFIRO_CONSUMER_LUA)
+    if (!zafiro::register_lua(hub)) throw std::runtime_error("No se registró Lua");
+    std::cout << hub.run("lua", "print('Lua desde find_package')") << '\n';
 #endif
 }
 
