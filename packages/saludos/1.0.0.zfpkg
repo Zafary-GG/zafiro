@@ -1,0 +1,8 @@
+{
+  "format": "zafiro-package-v1",
+  "name": "@zafiro/saludos",
+  "version": "1.0.0",
+  "moduleName": "saludos",
+  "integrity": "sha256-684f85b714139b683d5ddd013cd81a055b7b6cb1e7386afd8c11b93d4f84d70e",
+  "module": "modulo saludos {\n  funcion bienvenida(persona) = \"Bienvenido, \" + persona\n  funcion despedida(persona) = \"Hasta luego, \" + persona\n}\r\n"
+}

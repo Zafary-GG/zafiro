@@ -1,0 +1,21 @@
+{
+  "schemaVersion": 1,
+  "packages": {
+    "@zafiro/saludos": {
+      "versions": {
+        "1.0.0": {
+          "path": "./saludos/1.0.0.zfpkg",
+          "integrity": "sha256-e68d1b828e28c896dcf4f0ced14805ae6433ccb11d6ae54e78aa3ea38eb1009b"
+        }
+      }
+    },
+    "@zafiro/utilidades-numericas": {
+      "versions": {
+        "1.0.0": {
+          "path": "./utilidades-numericas/1.0.0.zfpkg",
+          "integrity": "sha256-cb01c2f6122f600f3f3153157fd00a8c1b0752ba26df520bc758aa14cad51e7c"
+        }
+      }
+    }
+  }
+}

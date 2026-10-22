@@ -1,0 +1,4 @@
+modulo utilidades_numericas {
+  funcion doble(valor) = valor * 2
+  funcion impuesto_mx(precio) = precio * 1.16
+}

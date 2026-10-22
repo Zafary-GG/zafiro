@@ -1,0 +1,8 @@
+{
+  "format": "zafiro-package-v1",
+  "name": "@zafiro/utilidades-numericas",
+  "version": "1.0.0",
+  "moduleName": "utilidades_numericas",
+  "integrity": "sha256-6fd423eb225316e6af5b8aeb4e0a628e4203aa52e1b7b115fcfee927a01adb49",
+  "module": "modulo utilidades_numericas {\n  funcion doble(valor) = valor * 2\n  funcion impuesto_mx(precio) = precio * 1.16\n}\r\n"
+}

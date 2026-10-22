@@ -1,0 +1,4 @@
+modulo saludos {
+  funcion bienvenida(persona) = "Bienvenido, " + persona
+  funcion despedida(persona) = "Hasta luego, " + persona
+}

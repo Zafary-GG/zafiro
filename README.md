@@ -25,7 +25,13 @@ npm run build
 
 `zafiro.json` define el archivo de entrada y la carpeta de salida. El proyecto creado incluye la CLI y el compilador para seguir funcionando por su cuenta.
 
-WebScript sigue siendo un lenguaje de dominio temprano, no de propósito general. Los módulos importados son locales a la carpeta del proyecto; los tipos son anotaciones básicas y los ciclos solo acumulan una expresión. Aún faltan módulos publicados/gestor de paquetes, tipos estáticos completos, una biblioteca extensible, validación semántica completa en VS Code, navegación entre pantallas y compilación a APK/IPA nativos.
+### Paquetes `.zfm`
+
+El catálogo inicial contiene `@zafiro/saludos` y `@zafiro/utilidades-numericas`. Desde la carpeta de un proyecto ejecuta `node bin/zafiro.js list` para verlos, o `node bin/zafiro.js install @zafiro/saludos` para instalar; importa el paquete con `usar "@zafiro/saludos"`. El gestor guarda la versión exacta en `zafiro.json`, crea `zafiro.lock` con el hash SHA-256 y conserva el módulo en `modules/packages/`. `node bin/zafiro.js update` actualiza los paquetes del registro; también puedes pasar un paquete concreto.
+
+Para compartir un módulo, crea un archivo de paquete con `node bin/zafiro.js pack modulo.zfm --name @autor/nombre --version 1.0.0`. El resultado `.zfpkg` se puede instalar desde archivo (`node bin/zafiro.js install ./autor-nombre-1.0.0.zfpkg`) o proponer para el catálogo. Los paquetes contienen únicamente módulos WebScript validados, no JavaScript ejecutable. Consulta [la guía del catálogo](packages/README.md).
+
+WebScript sigue siendo un lenguaje de dominio temprano, no de propósito general. El gestor de paquetes y su catálogo inicial ya están disponibles; los módulos solo pueden importar desde el archivo principal del proyecto. Los tipos son anotaciones básicas y los ciclos solo acumulan una expresión. Aún faltan tipos estáticos completos, dependencias transitivas, validación semántica completa en VS Code, navegación entre pantallas y compilación a APK/IPA nativos.
 
 La app de ejemplo puede solicitar la ubicación del dispositivo que la está usando. La Geolocation API requiere HTTPS o localhost; el navegador pide el permiso cuando la persona toca el botón. Las coordenadas se muestran localmente: no localiza teléfonos por número o dispositivos ajenos y no las envía al servidor.
 
